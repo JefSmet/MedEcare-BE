@@ -7,6 +7,7 @@
  * - Loads environment variables (via config/env.ts)
  * - Configures global middleware (JSON, urlencoded, morgan)
  * - Defines a basic health-check route
+ * - Initializes Passport strategies
  *
  * @notes
  * - This file does not start the server; it only configures and exports the app
@@ -15,8 +16,12 @@
 
 import express, { Request, Response } from 'express';
 import morgan from 'morgan';
+import passport from 'passport';
 
 import { loadEnv } from './config/env';
+
+// Import passport strategies so they're configured on import
+import './config/passport-strategies';
 
 // 1. Load environment variables
 loadEnv();
@@ -29,7 +34,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// 4. Basic route for health check
+// 4. Initialize passport
+app.use(passport.initialize());
+
+// 5. Basic route for health check
 app.get('/', (req: Request, res: Response) => {
   res
     .status(200)
