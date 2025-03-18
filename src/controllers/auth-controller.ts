@@ -9,20 +9,21 @@
  * - login: Authenticates a user via Passport's local strategy, returns JWT tokens.
  * - refreshToken: Validates an existing refresh token, issues a new access/refresh pair.
  * - forgotPassword: Generates a reset token, stores it, sends email via SendGrid.
- * - (Future) resetPassword: Will verify the token, set a new password, etc.
+ * - resetPassword: Verifies the token, sets a new password if valid, clears the token.
  *
  * @dependencies
  * - express: for Request, Response, NextFunction types.
  * - passport: used to authenticate the user in the login method.
- * - user-service: used in registration; also helpful for advanced user lookups if needed.
+ * - user-service: used in registration, password updates, etc.
  * - token-utils: for generating access and refresh tokens with different expiration times.
- * - password-validator: for validating password strength requirements on registration.
+ * - password-validator: for validating password strength requirements.
  * - auth-service: for storing and retrieving refresh/reset tokens from DB.
  * - email-service: for sending the password reset emails via SendGrid.
  *
  * @notes
  * - The `login()` method relies on `passport.authenticate('local')` to verify credentials.
- * - The `forgotPassword()` method in this file is newly introduced for Step 9.
+ * - The `forgotPassword()` method initiates the reset process by sending an email.
+ * - The newly added `resetPassword()` method completes the reset process.
  */
 
 import crypto from 'crypto';
@@ -37,7 +38,12 @@ import {
   storeResetToken,
 } from '../services/auth-service';
 import { sendResetEmail } from '../services/email-service';
-import { createUser, findByEmail } from '../services/user-service';
+import {
+  createUser,
+  findByEmail,
+  findByResetToken,
+  updatePassword,
+} from '../services/user-service';
 import { isPasswordValid } from '../utils/password-validator';
 import { generateTokens } from '../utils/token-utils';
 
@@ -366,3 +372,91 @@ export async function forgotPassword(
     next(error);
   }
 }
+
+/**
+ * Interface describing the expected shape of the request body
+ * for the resetPassword endpoint.
+ */
+interface ResetPasswordRequestBody {
+  token?: string;         // The reset token provided in the request
+  newPassword?: string;   // The new password the user wants to set
+}
+
+/**
+ * @function resetPassword
+ * @description Handles the final step of password reset:
+ *  1. Validates the incoming request for reset token and new password.
+ *  2. Finds the corresponding user based on the reset token.
+ *  3. Checks if the token is still valid (not expired).
+ *  4. Validates new password strength.
+ *  5. Updates the user's password and clears the reset token fields.
+ *  6. Returns a success or appropriate error code.
+ *
+ * @param {Request} req - The Express Request object
+ * @param {Response} res - The Express Response object
+ * @param {NextFunction} next - The Express NextFunction for error handling
+ *
+ * @returns {Promise<void>} - The result is sent as an HTTP response
+ *
+ * @example
+ *  POST /auth/reset-password
+ *  {
+ *    "token": "abc123random",
+ *    "newPassword": "StrongNewPass!1"
+ *  }
+ */
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { token, newPassword } = req.body as ResetPasswordRequestBody;
+
+    // 1. Check for presence of required fields
+    if (!token || !newPassword) {
+      res.status(400).json({
+        error:
+          'Both "token" and "newPassword" fields are required to reset the password.',
+      });
+      return;
+    }
+
+    // 2. Locate the user by reset token
+    const user = await findByResetToken(token);
+    if (!user) {
+      // No user with the given reset token => invalid or already used
+      res.status(404).json({ error: 'Invalid or unknown reset token.' });
+      return;
+    }
+
+    // 3. Check if the token is expired
+    if (!user.resetExpire || user.resetExpire < new Date()) {
+      res.status(400).json({
+        error: 'This reset token has expired. Please request a new one.',
+      });
+      return;
+    }
+
+    // 4. Validate the new password
+    if (!isPasswordValid(newPassword)) {
+      res.status(400).json({
+        error: 'New password does not meet the required strength policy.',
+      });
+      return;
+    }
+
+    // 5. Update the password and clear the reset fields
+    await updatePassword(user.id, newPassword);
+
+    // Clear the token fields in the DB
+    await storeResetToken(user.id, '', new Date(0)); // effectively sets them to empty/expired
+
+    res.status(200).json({
+      message: 'Password has been reset successfully. You can now log in.',
+    });
+  } catch (error: any) {
+    next(error);
+  }
+}
+

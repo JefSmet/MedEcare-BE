@@ -6,6 +6,7 @@
  * - createUser: Creates a new user with a hashed password
  * - findByEmail: Finds a user by their email address
  * - updatePassword: Updates a user's password with a new hashed password
+ * - findByResetToken: Retrieves a user by their reset token (for password reset flows)
  *
  * @dependencies
  * - PrismaClient from '@prisma/client': For database interactions
@@ -15,6 +16,7 @@
  * - Throws an error if a user with a given email already exists (unique constraint)
  * - Uses a default role of 'USER' if none is provided
  * - Ensure that the calling code handles errors properly
+ * - The findByResetToken method is newly introduced to aid the resetPassword controller
  */
 
 import { PrismaClient, User } from '@prisma/client';
@@ -120,3 +122,27 @@ export async function updatePassword(
     throw error;
   }
 }
+
+/**
+ * @function findByResetToken
+ * @description Retrieves a user record by their reset token.
+ * @param {string} token - The reset token to search for in the 'resetToken' field
+ * @returns {Promise<User|null>} - Returns the user if found; otherwise null
+ *
+ * @example
+ *   const user = await findByResetToken("randomGeneratedTokenHere");
+ *   if (user) {
+ *     console.log("User who requested reset: ", user.email);
+ *   }
+ */
+export async function findByResetToken(token: string): Promise<User | null> {
+  try {
+    const user = await prisma.user.findFirst({
+      where: { resetToken: token },
+    });
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
