@@ -8,16 +8,18 @@
  * - updatePassword: Updates a user's password with a new hashed password
  * - findByResetToken: Retrieves a user by their reset token (for password reset flows)
  * - findById: Retrieves a user by their primary key (id)
+ * - findAllUsers: Retrieves all user records (admin usage)
+ * - updateUser: Updates arbitrary fields of a user (email, role, password, etc.)
+ * - deleteUser: Removes a user record entirely
  *
  * @dependencies
  * - PrismaClient from '@prisma/client': For database interactions
  * - bcrypt: For secure password hashing
  *
  * @notes
- * - Throws an error if a user with a given email already exists (unique constraint)
- * - Uses a default role of 'USER' if none is provided
- * - The findByResetToken method is newly introduced to aid the resetPassword controller
- * - The findById method is added to facilitate secure retrieval of user data (including hashed password)
+ * - This module is used by both public-facing controllers (e.g., registration) and admin controllers.
+ * - Password hashing is handled in createUser and updatePassword (or updateUser if we decide).
+ * - The new findAllUsers, updateUser, and deleteUser are exclusively for Admin usage.
  */
 
 import { PrismaClient, User } from '@prisma/client';
@@ -33,7 +35,7 @@ const prisma = new PrismaClient();
  * @param {string} params.password - The user's plaintext password
  * @param {string} [params.role] - The user's role (optional; default is 'USER')
  * @returns {Promise<User>} - A promise that resolves to the newly created User object
- * @throws {Error} - Throws an error if the user email already exists or if a DB error occurs
+ * @throws {Error} - Throws an error if a user with the given email already exists
  *
  * @example
  *   const user = await createUser({ email: "test@example.com", password: "StrongPass#1" });
@@ -60,7 +62,7 @@ export async function createUser({
 
     return newUser;
   } catch (error: any) {
-    // Handle unique constraint violation (Prisma code 'P2002') or rethrow
+    // Handle unique constraint violation
     if (error.code === 'P2002') {
       throw new Error(`User with email ${email} already exists.`);
     }
@@ -97,7 +99,6 @@ export async function findByEmail(email: string): Promise<User | null> {
  * @param {string} userId - The unique identifier (id) of the user
  * @param {string} newPassword - The user's new plaintext password
  * @returns {Promise<User>} - A promise that resolves to the updated User object
- * @throws {Error} - Throws an error if the user cannot be found or if a DB error occurs
  *
  * @example
  *   await updatePassword("some-user-id", "NewPass123!");
@@ -119,7 +120,6 @@ export async function updatePassword(
 
     return updatedUser;
   } catch (error: any) {
-    // If user not found, Prisma will throw an error
     throw error;
   }
 }
@@ -127,14 +127,11 @@ export async function updatePassword(
 /**
  * @function findByResetToken
  * @description Retrieves a user record by their reset token.
- * @param {string} token - The reset token to search for in the 'resetToken' field
+ * @param {string} token - The reset token to search for
  * @returns {Promise<User|null>} - Returns the user if found; otherwise null
  *
  * @example
  *   const user = await findByResetToken("randomGeneratedTokenHere");
- *   if (user) {
- *     console.log("User who requested reset: ", user.email);
- *   }
  */
 export async function findByResetToken(token: string): Promise<User | null> {
   try {
@@ -156,7 +153,7 @@ export async function findByResetToken(token: string): Promise<User | null> {
  * @example
  *   const user = await findById("some-uuid");
  *   if (user) {
- *     console.log("Found user with email:", user.email);
+ *     console.log("Found user:", user.email);
  *   }
  */
 export async function findById(id: string): Promise<User | null> {
@@ -166,6 +163,73 @@ export async function findById(id: string): Promise<User | null> {
     });
     return user;
   } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * @function findAllUsers
+ * @description Retrieves all user records from the database.
+ * @returns {Promise<User[]>} - A promise that resolves to an array of User objects
+ *
+ * @example
+ *  const users = await findAllUsers();
+ *  console.log(users);
+ */
+export async function findAllUsers(): Promise<User[]> {
+  try {
+    const users = await prisma.user.findMany();
+    return users;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * @function updateUser
+ * @description Updates arbitrary fields for a given user. This is primarily used by Admin operations.
+ * @param {string} userId - The ID of the user to update
+ * @param {Object} data - Key-value pairs of fields to update (e.g., { email: 'newemail', role: 'ADMIN' })
+ * @returns {Promise<User>} - Returns the updated user record
+ *
+ * @example
+ *   const updated = await updateUser("user-id", { email: "new@example.com", role: "ADMIN" });
+ */
+export async function updateUser(
+  userId: string,
+  data: Partial<User>,
+): Promise<User> {
+  try {
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...data,
+        updatedAt: new Date(),
+      },
+    });
+    return updated;
+  } catch (error: any) {
+    throw error;
+  }
+}
+
+/**
+ * @function deleteUser
+ * @description Removes a user record by ID.
+ * @param {string} userId - The ID of the user to delete
+ * @returns {Promise<User>} - The record that was deleted
+ *
+ * @example
+ *   const deleted = await deleteUser("user-id");
+ *   console.log("User deleted:", deleted);
+ */
+export async function deleteUser(userId: string): Promise<User> {
+  try {
+    const deleted = await prisma.user.delete({
+      where: { id: userId },
+    });
+    return deleted;
+  } catch (error: any) {
     throw error;
   }
 }

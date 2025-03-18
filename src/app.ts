@@ -9,10 +9,11 @@
  * - Defines a basic health-check route
  * - Initializes Passport strategies
  * - Mounts auth-related routes under /auth
+ * - Mounts admin-related routes under /admin
  *
  * @notes
  * - This file does not start the server; it only configures and exports the app
- * - Additional middlewares and route registrations will be added in subsequent steps
+ * - Additional middlewares and route registrations may be added in future steps
  */
 
 import express, { Request, Response } from 'express';
@@ -24,7 +25,8 @@ import { loadEnv } from './config/env';
 // Import passport strategies so they're configured on import
 import './config/passport-strategies';
 
-// Import the new auth routes
+// Import the new routes
+import adminRoutes from './routes/admin-routes';
 import authRoutes from './routes/auth-routes';
 
 // 1. Load environment variables
@@ -50,5 +52,9 @@ app.get('/', (req: Request, res: Response) => {
 
 // 6. Mount the authentication routes on /auth
 app.use('/auth', authRoutes);
+
+// 7. Mount the admin routes on /admin
+//    These routes require the user to be an Admin (handled in admin-routes).
+app.use('/admin', adminRoutes);
 
 export default app;
