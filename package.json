@@ -25,6 +25,7 @@
   "author": "Jef Smet",
   "license": "MIT",
   "dependencies": {
+    "@sendgrid/mail": "^8.1.4",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -32,8 +33,7 @@
     "morgan": "^1.10.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
-    "passport-local": "^1.0.0",
-    "sendgrid": "^5.2.3"
+    "passport-local": "^1.0.0"
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma"

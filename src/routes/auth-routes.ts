@@ -7,17 +7,23 @@
  * - POST /auth/register: Registers a new user
  * - POST /auth/login: Logs in a user, returning JWT tokens
  * - POST /auth/refresh: Exchanges an existing refresh token for a new pair
+ * - POST /auth/forgot-password: Sends a reset link via email
  *
  * @dependencies
  * - express: for creating a Router.
  * - auth-controller: where the actual controller logic is implemented.
  *
  * @notes
- * - Additional endpoints (forgot-password, reset-password, etc.) will be added in future steps.
+ * - Additional endpoints (reset-password) will come in a future step.
  */
 
 import { Router } from 'express';
-import { register, login, refreshToken } from '../controllers/auth-controller';
+import {
+  forgotPassword,
+  login,
+  refreshToken,
+  register,
+} from '../controllers/auth-controller';
 
 const router = Router();
 
@@ -55,5 +61,15 @@ router.post('/login', login);
  */
 router.post('/refresh', refreshToken);
 
-export default router;
+/**
+ * POST /auth/forgot-password
+ * ----------------------------------------------------------------------------
+ * Initiates a password reset flow by sending a reset link to the user's email.
+ * Expects JSON body containing:
+ *   {
+ *     "email": "user@example.com"
+ *   }
+ */
+router.post('/forgot-password', forgotPassword);
 
+export default router;

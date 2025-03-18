@@ -8,6 +8,8 @@
  * - register: Validates input, checks password strength, creates user in the DB.
  * - login: Authenticates a user via Passport's local strategy, returns JWT tokens.
  * - refreshToken: Validates an existing refresh token, issues a new access/refresh pair.
+ * - forgotPassword: Generates a reset token, stores it, sends email via SendGrid.
+ * - (Future) resetPassword: Will verify the token, set a new password, etc.
  *
  * @dependencies
  * - express: for Request, Response, NextFunction types.
@@ -15,13 +17,15 @@
  * - user-service: used in registration; also helpful for advanced user lookups if needed.
  * - token-utils: for generating access and refresh tokens with different expiration times.
  * - password-validator: for validating password strength requirements on registration.
- * - auth-service: for storing and retrieving refresh tokens from DB.
+ * - auth-service: for storing and retrieving refresh/reset tokens from DB.
+ * - email-service: for sending the password reset emails via SendGrid.
  *
  * @notes
  * - The `login()` method relies on `passport.authenticate('local')` to verify credentials.
- * - The `refreshToken()` method enforces a single-use refresh token strategy by removing used tokens.
+ * - The `forgotPassword()` method in this file is newly introduced for Step 9.
  */
 
+import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
@@ -30,8 +34,10 @@ import {
   findRefreshToken,
   removeRefreshToken,
   storeRefreshToken,
+  storeResetToken,
 } from '../services/auth-service';
-import { createUser } from '../services/user-service';
+import { sendResetEmail } from '../services/email-service';
+import { createUser, findByEmail } from '../services/user-service';
 import { isPasswordValid } from '../utils/password-validator';
 import { generateTokens } from '../utils/token-utils';
 
@@ -277,6 +283,85 @@ export async function refreshToken(
       tokens: newTokens,
     });
     return;
+  } catch (error: any) {
+    next(error);
+  }
+}
+
+/**
+ * Interface describing the expected shape of the request body
+ * for forgotten password request.
+ */
+interface ForgotPasswordRequestBody {
+  email?: string;
+}
+
+/**
+ * @function forgotPassword
+ * @description Handles the request to generate and send a password reset email.
+ *  1. Looks up the user by the provided email.
+ *  2. If found, generates a random token and sets an expiration (e.g., 1 hour from now).
+ *  3. Stores the token & expiration in the database (User.resetToken, User.resetExpire).
+ *  4. Sends a password reset email to the user via SendGrid.
+ *  5. Returns a 200 response indicating success, or a 404 if the user does not exist.
+ *
+ * @param {Request} req - The Express Request object
+ * @param {Response} res - The Express Response object
+ * @param {NextFunction} next - The Express NextFunction for error handling
+ *
+ * @returns {Promise<void>} - The result is sent as HTTP response
+ *
+ * @example
+ *  POST /auth/forgot-password
+ *  {
+ *    "email": "test@example.com"
+ *  }
+ */
+export async function forgotPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { email } = req.body as ForgotPasswordRequestBody;
+    if (!email) {
+      res
+        .status(400)
+        .json({ error: 'Email is required to request password reset.' });
+      return;
+    }
+
+    // 1. Lookup the user by email
+    const user = await findByEmail(email);
+    if (!user) {
+      // Per the plan: If email not found, return 404
+      res
+        .status(404)
+        .json({ error: 'No user found with the given email address.' });
+      return;
+    }
+
+    // 2. Generate a reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // 3. Set expiration to 1 hour from now
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1);
+
+    // 4. Store the token & expiration in DB
+    await storeResetToken(user.id, resetToken, expiresAt);
+
+    // 5. Construct the reset link (replace with your front-end or actual route)
+    const resetLink = `https://your-frontend-app.com/reset-password?token=${resetToken}`;
+
+    // 6. Send the reset email
+    await sendResetEmail(user.email, resetLink);
+
+    // 7. Return success (optionally avoid revealing user existence details)
+    res.status(200).json({
+      message:
+        'Reset instructions sent to the provided email address (if valid).',
+    });
   } catch (error: any) {
     next(error);
   }
