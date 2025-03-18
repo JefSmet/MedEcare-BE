@@ -13,6 +13,7 @@ This repository contains a Node.js backend server built with:
 - Deployment targeted for **Windows Server with IIS** using **iisnode**.
 
 ---
+
 ## Table of Contents
 
 - [Key Features](#key-features)
@@ -66,6 +67,7 @@ project-root/ ├─ src/ │ ├─ config/ # Configuration files (passport, en
 Below is an overview of the main routes and their purposes.
 
 ### Authentication Routes (`/auth/...`)
+
 | Method | Endpoint            | Description                                                                           |
 |--------|---------------------|---------------------------------------------------------------------------------------|
 | POST   | `/auth/register`    | Registers a new user with `email` and `password`. Validates password strength.       |
@@ -77,6 +79,7 @@ Below is an overview of the main routes and their purposes.
 | POST   | `/auth/logout`      | Invalidates the user's refresh token to end the session.                             |
 
 ### Admin Routes (`/admin/...`)
+
 | Method | Endpoint                  | Description                                                       |
 |--------|---------------------------|-------------------------------------------------------------------|
 | GET    | `/admin/users`           | Lists all users (email, role, timestamps).                        |
@@ -91,9 +94,11 @@ Below is an overview of the main routes and their purposes.
 ## Installation and Setup
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/YourOrg/medecare-be.git
    cd medecare-be
+
 ```
 
 2. **Install Node.js dependencies**:
