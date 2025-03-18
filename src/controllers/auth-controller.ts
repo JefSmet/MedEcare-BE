@@ -10,7 +10,8 @@
  * - refreshToken: Validates an existing refresh token, issues a new access/refresh pair.
  * - forgotPassword: Generates a reset token, stores it, sends email via SendGrid.
  * - resetPassword: Verifies the token, sets a new password if valid, clears the token.
- * - changePassword: Allows an authenticated user to change their password if they provide the correct old password.
+ * - changePassword: Allows an authenticated user to change their password.
+ * - logout: Invalidates a user's refresh token so it can no longer be used.
  *
  * @dependencies
  * - express: for Request, Response, NextFunction types.
@@ -26,6 +27,7 @@
  * - The `forgotPassword()` method initiates the reset process by sending an email.
  * - The `resetPassword()` method completes the reset process.
  * - The `changePassword()` method requires an existing login session (JWT-based).
+ * - The `logout()` method invalidates a specific refresh token, or returns success if none is found.
  */
 
 import crypto from 'crypto';
@@ -45,7 +47,6 @@ import {
   findByEmail,
   findByResetToken,
   updatePassword,
-  // Newly imported:
   findById,
 } from '../services/user-service';
 import { isPasswordValid } from '../utils/password-validator';
@@ -135,7 +136,7 @@ interface LoginRequestBody {
  *  1. Uses passport.authenticate('local') to validate credentials.
  *  2. If valid, generates access & refresh tokens with different expirations
  *     based on platform (web or mobile).
- *  3. Stores the refresh token in the database (single or multi-device approach).
+ *  3. Stores the refresh token in the database.
  *  4. Responds with tokens in JSON format.
  *
  * @param {Request} req - The Express Request object
@@ -153,13 +154,12 @@ interface LoginRequestBody {
  *  }
  */
 export function login(req: Request, res: Response, next: NextFunction): void {
-  passport.authenticate('local', async (err: any, user: any, info: any) => {
+  passport.authenticate('local', async (err: any, user: any, info: any): Promise<void> => {
     if (err) {
       next(err);
       return;
     }
     if (!user) {
-      // Als de gebruiker niet gevonden wordt of als het wachtwoord niet overeenkomt
       res.status(401).json({ error: info?.message || 'Invalid credentials.' });
       return;
     }
@@ -248,7 +248,6 @@ export async function refreshToken(
       // Verify the refresh token's signature and decode
       payload = jwt.verify(refreshToken, secret);
     } catch (verifyError) {
-      // If signature invalid of token verlopen
       res.status(401).json({ error: 'Invalid or expired refresh token.' });
       return;
     }
@@ -262,32 +261,31 @@ export async function refreshToken(
       return;
     }
 
-    // Check of de refresh token verlopen is volgens de DB
+    // Check if the refresh token is expired according to DB
     if (existingRefresh.expiresAt < new Date()) {
-      // Indien verlopen, verwijder de token
       await removeRefreshToken(refreshToken);
       res.status(401).json({ error: 'Refresh token has expired.' });
       return;
     }
 
-    // Verwijder de oude refresh token (single-use)
+    // Remove the old refresh token (single-use)
     await removeRefreshToken(refreshToken);
 
-    // Haal het userId uit de payload (hier gaan we ervan uit dat payload.id beschikbaar is)
+    // Extract userId from the token payload (assuming payload.id is set)
     const userId = payload.id;
 
-    // Genereer nieuwe tokens
+    // Generate new tokens
     const newTokens = generateTokens({ id: userId } as any, platform);
 
-    // Bereken de nieuwe vervaldatum voor de refresh token
+    // Calculate new expiration date for the refresh token
     const refreshExpireDays = platform === 'mobile' ? 30 : 7;
     const newExpiresAt = new Date();
     newExpiresAt.setDate(newExpiresAt.getDate() + refreshExpireDays);
 
-    // Sla de nieuwe refresh token op in de DB
+    // Store the new refresh token in the DB
     await storeRefreshToken(userId, newTokens.refreshToken, newExpiresAt);
 
-    // Verstuur de nieuwe tokens naar de client
+    // Send the new tokens to the client
     res.status(200).json({
       message: 'Tokens refreshed successfully.',
       tokens: newTokens,
@@ -310,10 +308,10 @@ interface ForgotPasswordRequestBody {
  * @function forgotPassword
  * @description Handles the request to generate and send a password reset email.
  *  1. Looks up the user by the provided email.
- *  2. If found, generates a random token and sets an expiration (e.g., 1 hour from now).
- *  3. Stores the token & expiration in the database (User.resetToken, User.resetExpire).
+ *  2. If found, generates a random token and sets an expiration (e.g., 1 hour).
+ *  3. Stores the token & expiration in the DB (User.resetToken, User.resetExpire).
  *  4. Sends a password reset email to the user via SendGrid.
- *  5. Returns a 200 response indicating success, or a 404 if the user does not exist.
+ *  5. Returns a 200 response indicating success (or 404 if user not found).
  *
  * @param {Request} req - The Express Request object
  * @param {Response} res - The Express Response object
@@ -344,7 +342,6 @@ export async function forgotPassword(
     // 1. Lookup the user by email
     const user = await findByEmail(email);
     if (!user) {
-      // Per the plan: If email not found, return 404
       res
         .status(404)
         .json({ error: 'No user found with the given email address.' });
@@ -367,11 +364,12 @@ export async function forgotPassword(
     // 6. Send the reset email
     await sendResetEmail(user.email, resetLink);
 
-    // 7. Return success (optionally avoid revealing user existence details)
+    // 7. Return success
     res.status(200).json({
       message:
         'Reset instructions sent to the provided email address (if valid).',
     });
+    return;
   } catch (error: any) {
     next(error);
   }
@@ -382,8 +380,8 @@ export async function forgotPassword(
  * for the resetPassword endpoint.
  */
 interface ResetPasswordRequestBody {
-  token?: string;         // The reset token provided in the request
-  newPassword?: string;   // The new password the user wants to set
+  token?: string;
+  newPassword?: string;
 }
 
 /**
@@ -394,7 +392,6 @@ interface ResetPasswordRequestBody {
  *  3. Checks if the token is still valid (not expired).
  *  4. Validates new password strength.
  *  5. Updates the user's password and clears the reset token fields.
- *  6. Returns a success or appropriate error code.
  *
  * @param {Request} req - The Express Request object
  * @param {Response} res - The Express Response object
@@ -417,7 +414,6 @@ export async function resetPassword(
   try {
     const { token, newPassword } = req.body as ResetPasswordRequestBody;
 
-    // 1. Check for presence of required fields
     if (!token || !newPassword) {
       res.status(400).json({
         error:
@@ -429,7 +425,6 @@ export async function resetPassword(
     // 2. Locate the user by reset token
     const user = await findByResetToken(token);
     if (!user) {
-      // No user with the given reset token => invalid or already used
       res.status(404).json({ error: 'Invalid or unknown reset token.' });
       return;
     }
@@ -452,13 +447,12 @@ export async function resetPassword(
 
     // 5. Update the password and clear the reset fields
     await updatePassword(user.id, newPassword);
-
-    // Clear the token fields in the DB
-    await storeResetToken(user.id, '', new Date(0)); // effectively sets them to empty/expired
+    await storeResetToken(user.id, '', new Date(0)); // effectively empties the token
 
     res.status(200).json({
       message: 'Password has been reset successfully. You can now log in.',
     });
+    return;
   } catch (error: any) {
     next(error);
   }
@@ -500,17 +494,13 @@ export async function changePassword(
   next: NextFunction,
 ): Promise<void> {
   try {
-    // The user should be attached to req.user by the JWT strategy
     const userFromJwt = req.user as { id: string } | undefined;
-
     if (!userFromJwt || !userFromJwt.id) {
       res.status(401).json({ error: 'Unauthorized or invalid token.' });
       return;
     }
 
     const { oldPassword, newPassword } = req.body as ChangePasswordRequestBody;
-
-    // Validate input presence
     if (!oldPassword || !newPassword) {
       res.status(400).json({
         error: 'Both "oldPassword" and "newPassword" fields are required.',
@@ -518,15 +508,12 @@ export async function changePassword(
       return;
     }
 
-    // Retrieve the user from DB to get the hashed password
     const dbUser = await findById(userFromJwt.id);
     if (!dbUser) {
       res.status(404).json({ error: 'User not found.' });
       return;
     }
 
-    // Compare oldPassword with the hashed password from the DB
-    // (We do that in the passport local strategy as well, but here we do it again specifically for a password change.)
     const bcrypt = require('bcrypt');
     const isMatch = await bcrypt.compare(oldPassword, dbUser.password);
     if (!isMatch) {
@@ -534,22 +521,82 @@ export async function changePassword(
       return;
     }
 
-    // Check new password strength
     if (!isPasswordValid(newPassword)) {
-      res
-        .status(400)
-        .json({ error: 'New password does not meet strength requirements.' });
+      res.status(400).json({ error: 'New password does not meet strength requirements.' });
       return;
     }
 
-    // Finally, update the password
     await updatePassword(dbUser.id, newPassword);
 
     res.status(200).json({
       message: 'Password changed successfully.',
     });
+    return;
   } catch (error: any) {
     next(error);
   }
 }
 
+/**
+ * Interface describing the expected shape of the request body
+ * for the logout endpoint.
+ */
+interface LogoutRequestBody {
+  refreshToken?: string;
+}
+
+/**
+ * @function logout
+ * @description Invalidates a user's refresh token so it can no longer be used to refresh access tokens.
+ *  1. Reads the refresh token from the request body (or headers, if you prefer).
+ *  2. If token is provided, removes it from the DB (if it exists).
+ *  3. Returns a success response regardless (idempotent behavior).
+ *
+ * @param {Request} req - The Express Request object
+ * @param {Response} res - The Express Response object
+ * @param {NextFunction} next - The Express NextFunction for error handling
+ *
+ * @returns {Promise<void>} - The result is sent as HTTP response
+ *
+ * @example
+ *  POST /auth/logout
+ *  {
+ *    "refreshToken": "the_refresh_token_here"
+ *  }
+ */
+export async function logout(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { refreshToken } = req.body as LogoutRequestBody;
+
+    // If no token is provided, simply return success (idempotent)
+    if (!refreshToken) {
+      res.status(200).json({
+        message: 'Logout successful (no token provided).',
+      });
+      return;
+    }
+
+    // Attempt to remove the token from the DB
+    try {
+      await removeRefreshToken(refreshToken);
+      res.status(200).json({
+        message: 'Logout successful. Refresh token invalidated.',
+      });
+      return;
+    } catch (removeError: any) {
+      if (removeError.code === 'P2025') {
+        res.status(200).json({
+          message: 'Logout successful. Token was not found in DB.',
+        });
+        return;
+      }
+      throw removeError;
+    }
+  } catch (error: any) {
+    next(error);
+  }
+}

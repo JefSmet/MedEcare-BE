@@ -10,6 +10,7 @@
  * - POST /auth/forgot-password: Sends a reset link via email
  * - POST /auth/reset-password: Sets a new password using a valid reset token
  * - POST /auth/change-password: Changes a user's password while logged in
+ * - POST /auth/logout: Invalidates the user's refresh token
  *
  * @dependencies
  * - express: for creating a Router.
@@ -28,6 +29,7 @@ import {
   register,
   resetPassword,
   changePassword,
+  logout,
 } from '../controllers/auth-controller';
 
 // We need our JWT auth middleware
@@ -105,5 +107,16 @@ router.post('/reset-password', resetPassword);
  */
 router.post('/change-password', jwtAuth, changePassword);
 
-export default router;
+/**
+ * POST /auth/logout
+ * ----------------------------------------------------------------------------
+ * Invalidates the specified refresh token so it can no longer be used.
+ * Expects JSON body containing:
+ *   {
+ *     "refreshToken": "the_refresh_token_here"
+ *   }
+ * If no refreshToken is provided, it still returns success (idempotent).
+ */
+router.post('/logout', logout);
 
+export default router;
