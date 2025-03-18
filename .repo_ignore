@@ -131,3 +131,4 @@ dist
 
 .gitattributes
 .gitkeep
+.repo_ignore
