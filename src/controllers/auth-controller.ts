@@ -10,6 +10,7 @@
  * - refreshToken: Validates an existing refresh token, issues a new access/refresh pair.
  * - forgotPassword: Generates a reset token, stores it, sends email via SendGrid.
  * - resetPassword: Verifies the token, sets a new password if valid, clears the token.
+ * - changePassword: Allows an authenticated user to change their password if they provide the correct old password.
  *
  * @dependencies
  * - express: for Request, Response, NextFunction types.
@@ -23,7 +24,8 @@
  * @notes
  * - The `login()` method relies on `passport.authenticate('local')` to verify credentials.
  * - The `forgotPassword()` method initiates the reset process by sending an email.
- * - The newly added `resetPassword()` method completes the reset process.
+ * - The `resetPassword()` method completes the reset process.
+ * - The `changePassword()` method requires an existing login session (JWT-based).
  */
 
 import crypto from 'crypto';
@@ -43,6 +45,8 @@ import {
   findByEmail,
   findByResetToken,
   updatePassword,
+  // Newly imported:
+  findById,
 } from '../services/user-service';
 import { isPasswordValid } from '../utils/password-validator';
 import { generateTokens } from '../utils/token-utils';
@@ -454,6 +458,95 @@ export async function resetPassword(
 
     res.status(200).json({
       message: 'Password has been reset successfully. You can now log in.',
+    });
+  } catch (error: any) {
+    next(error);
+  }
+}
+
+/**
+ * Interface describing the request body for the changePassword endpoint.
+ */
+interface ChangePasswordRequestBody {
+  oldPassword?: string;
+  newPassword?: string;
+}
+
+/**
+ * @function changePassword
+ * @description Allows an authenticated user to change their password by providing their old password.
+ *  1. Requires JWT authentication (user must be logged in).
+ *  2. Compares the supplied old password with the user's hashed password in the DB.
+ *  3. Validates the strength of the new password.
+ *  4. If all checks pass, updates the user's password in the database.
+ *
+ * @param {Request} req - The Express Request object; must have req.user populated by JWT middleware.
+ * @param {Response} res - The Express Response object
+ * @param {NextFunction} next - The Express NextFunction for error handling
+ *
+ * @returns {Promise<void>} - The result is sent as an HTTP response
+ *
+ * @example
+ *  POST /auth/change-password
+ *  Headers: { Authorization: "Bearer <accessToken>" }
+ *  {
+ *    "oldPassword": "OldPass123!",
+ *    "newPassword": "NewStrongPass#1"
+ *  }
+ */
+export async function changePassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    // The user should be attached to req.user by the JWT strategy
+    const userFromJwt = req.user as { id: string } | undefined;
+
+    if (!userFromJwt || !userFromJwt.id) {
+      res.status(401).json({ error: 'Unauthorized or invalid token.' });
+      return;
+    }
+
+    const { oldPassword, newPassword } = req.body as ChangePasswordRequestBody;
+
+    // Validate input presence
+    if (!oldPassword || !newPassword) {
+      res.status(400).json({
+        error: 'Both "oldPassword" and "newPassword" fields are required.',
+      });
+      return;
+    }
+
+    // Retrieve the user from DB to get the hashed password
+    const dbUser = await findById(userFromJwt.id);
+    if (!dbUser) {
+      res.status(404).json({ error: 'User not found.' });
+      return;
+    }
+
+    // Compare oldPassword with the hashed password from the DB
+    // (We do that in the passport local strategy as well, but here we do it again specifically for a password change.)
+    const bcrypt = require('bcrypt');
+    const isMatch = await bcrypt.compare(oldPassword, dbUser.password);
+    if (!isMatch) {
+      res.status(401).json({ error: 'Old password is incorrect.' });
+      return;
+    }
+
+    // Check new password strength
+    if (!isPasswordValid(newPassword)) {
+      res
+        .status(400)
+        .json({ error: 'New password does not meet strength requirements.' });
+      return;
+    }
+
+    // Finally, update the password
+    await updatePassword(dbUser.id, newPassword);
+
+    res.status(200).json({
+      message: 'Password changed successfully.',
     });
   } catch (error: any) {
     next(error);

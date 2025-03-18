@@ -9,10 +9,12 @@
  * - POST /auth/refresh: Exchanges an existing refresh token for a new pair
  * - POST /auth/forgot-password: Sends a reset link via email
  * - POST /auth/reset-password: Sets a new password using a valid reset token
+ * - POST /auth/change-password: Changes a user's password while logged in
  *
  * @dependencies
  * - express: for creating a Router.
  * - auth-controller: where the actual controller logic is implemented.
+ * - auth-middleware: for JWT authentication checks.
  *
  * @notes
  * - Make sure to keep the routes minimal; all logic lives in the controller.
@@ -25,7 +27,11 @@ import {
   refreshToken,
   register,
   resetPassword,
+  changePassword,
 } from '../controllers/auth-controller';
+
+// We need our JWT auth middleware
+import { jwtAuth } from '../middleware/auth-middleware';
 
 const router = Router();
 
@@ -85,6 +91,19 @@ router.post('/forgot-password', forgotPassword);
  *   }
  */
 router.post('/reset-password', resetPassword);
+
+/**
+ * POST /auth/change-password
+ * ----------------------------------------------------------------------------
+ * Allows an authenticated user to change their password if they supply the correct old password.
+ * Requires a valid JWT in the Authorization header: "Bearer <accessToken>".
+ * Expects JSON body containing:
+ *   {
+ *     "oldPassword": "OldPass123!",
+ *     "newPassword": "NewPass456!"
+ *   }
+ */
+router.post('/change-password', jwtAuth, changePassword);
 
 export default router;
 
