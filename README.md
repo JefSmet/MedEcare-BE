@@ -1,6 +1,7 @@
 # MedEcare-BE
 
 This repository contains a Node.js backend server built with:
+
 - **Express.js** for web server
 - **Passport.js** for authentication (Local & JWT)
 - **Prisma** as ORM
@@ -61,9 +62,11 @@ project-root/ ├─ src/ │ ├─ config/ # Configuration files (passport, en
 ## Installation and Setup
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/YourOrg/medecare-be.git
    cd medecare-be
+
 ```
 
 2. **Install Node.js dependencies**:
