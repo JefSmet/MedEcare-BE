@@ -16,9 +16,11 @@
  * - express: for creating a Router.
  * - auth-controller: where the actual controller logic is implemented.
  * - auth-middleware: for JWT authentication checks.
+ * - loginRateLimiter: from config/rate-limit for limiting login attempts.
  *
  * @notes
  * - Make sure to keep the routes minimal; all logic lives in the controller.
+ * - Rate limiting is now applied to the login endpoint for security.
  */
 
 import { Router } from 'express';
@@ -34,6 +36,9 @@ import {
 
 // We need our JWT auth middleware
 import { jwtAuth } from '../middleware/auth-middleware';
+
+// Import the login rate limiter
+import { loginRateLimiter } from '../config/rate-limit';
 
 const router = Router();
 
@@ -57,8 +62,10 @@ router.post('/register', register);
  *     "password": "StrongPass#1",
  *     "platform": "web" | "mobile" (optional)
  *   }
+ *
+ * Now rate-limited to a maximum of 10 attempts per 15 minutes per IP.
  */
-router.post('/login', login);
+router.post('/login', loginRateLimiter, login);
 
 /**
  * POST /auth/refresh
