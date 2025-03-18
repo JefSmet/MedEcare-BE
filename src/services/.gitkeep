@@ -1,0 +1,7 @@
+/**
+ * @description
+ * Empty placeholder file so that the services folder is tracked by git.
+ * 
+ * Services for interacting with the database (via Prisma) and other
+ * business logic will be placed here.
+ */

@@ -1,0 +1,27 @@
+/**
+ * @description
+ * Configuration file for the TypeScript compiler.
+ *
+ * Key features:
+ * - Sets compiler options for Node.js
+ * - Uses strict mode for better type checking
+ * - Compiles to the ./dist folder
+ *
+ * @notes
+ * - You can adjust "target" or other settings as needed
+ */
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "**/*.test.ts"]
+}

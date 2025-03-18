@@ -1,0 +1,7 @@
+/**
+ * @description
+ * Empty placeholder file so that the middleware folder is tracked by git.
+ * 
+ * Middleware for authentication, error handling, role checks, etc. 
+ * will be placed here.
+ */

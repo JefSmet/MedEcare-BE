@@ -1,0 +1,18 @@
+/**
+ * @description
+ * The Prisma schema that defines the database structure.
+ * @notes
+ * - Currently only sets up the datasource and generator.
+ * - Models will be added or updated in future steps.
+ */
+
+datasource db {
+    provider = "sqlserver"
+    url      = env("DB_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+// Models will be created in later steps.
