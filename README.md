@@ -2,9 +2,9 @@
 
 This repository contains a Node.js backend server built with:
 
-- **Express.js** for web server
+- **Express.js** for the web server
 - **Passport.js** for authentication (Local & JWT)
-- **Prisma** as ORM
+- **Prisma** as the ORM
 - **MS SQL Server** as the database
 - **bcrypt** for password hashing
 - **SendGrid** for email (password reset links, etc.)
@@ -12,10 +12,12 @@ This repository contains a Node.js backend server built with:
 - **Role-based access control** for admin vs. user permissions
 - Deployment targeted for **Windows Server with IIS** using **iisnode**.
 
+---
 ## Table of Contents
 
 - [Key Features](#key-features)
 - [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
 - [Installation and Setup](#installation-and-setup)
   - [Environment Variables](#environment-variables)
   - [Database Configuration](#database-configuration)
@@ -23,8 +25,8 @@ This repository contains a Node.js backend server built with:
 - [Deployment to Windows Server & IIS](#deployment-to-windows-server--iis)
   - [1. Install Node.js and iisnode](#1-install-nodejs-and-iisnode)
   - [2. Configure IIS](#2-configure-iis)
-  - [3. Prepare the Production Build (if needed)](#3-prepare-the-production-build-if-needed)
-  - [4. Deploy and Configure Web.config](#4-deploy-and-configure-webconfig)
+  - [3. Prepare the Production Build (if-needed)](#3-prepare-the-production-build-if-needed)
+  - [4. Deploy and Configure web.config](#4-deploy-and-configure-webconfig)
   - [5. Set Up Environment Variables or .env.local](#5-set-up-environment-variables-or-envlocal)
   - [6. Verify Application](#6-verify-application)
 - [Testing](#testing)
@@ -53,20 +55,45 @@ The codebase adheres to the following structure:
 
 ```
 
-project-root/ ├─ src/ │ ├─ config/ # Configuration files (passport, env, rate-limit) │ ├─ controllers/ # Express route handlers │ ├─ middleware/ # Authentication and role-based middlewares │ ├─ prisma/ # Prisma schema and migrations │ ├─ routes/ # Route definitions │ ├─ services/ # Business logic & DB integration │ ├─ tests/ # Jest-based tests │ ├─ utils/ # Helper utilities (token generation, password validation, etc.) │ ├─ app.ts # Express app initialization │ └─ server.ts # Server entry point (listens on the configured PORT) ├─ .env.example # Example env file ├─ .env.local # Local environment variables (not tracked in Git) ├─ package.json ├─ tsconfig.json ├─ web.config # Configuration file for IIS + iisnode └─ README.md # This file
+project-root/ ├─ src/ │ ├─ config/ # Configuration files (passport, env, rate-limit) │ ├─ controllers/ # Express route handlers │ ├─ middleware/ # Authentication and role-based middlewares │ ├─ prisma/ # Prisma schema and migrations │ ├─ routes/ # Route definitions │ ├─ services/ # Business logic & DB integration │ ├─ tests/ # Jest-based tests │ ├─ utils/ # Helper utilities (token generation, password validation, etc.) │ ├─ app.ts # Express app initialization │ └─ server.ts # Server entry point (listens on the configured PORT) ├─ .env.example # Example env file ├─ .env.local # Local environment variables (not tracked by Git) ├─ package.json ├─ tsconfig.json ├─ web.config # Configuration file for IIS + iisnode (optional example) └─ README.md # This file
 
 ```
+
+---
+
+## API Endpoints
+
+Below is an overview of the main routes and their purposes.
+
+### Authentication Routes (`/auth/...`)
+| Method | Endpoint            | Description                                                                           |
+|--------|---------------------|---------------------------------------------------------------------------------------|
+| POST   | `/auth/register`    | Registers a new user with `email` and `password`. Validates password strength.       |
+| POST   | `/auth/login`       | Authenticates a user using Passport Local Strategy. Returns access & refresh tokens. |
+| POST   | `/auth/refresh`     | Exchanges an existing refresh token for new tokens.                                  |
+| POST   | `/auth/forgot-password` | Initiates password reset by sending a reset link to user's email.             |
+| POST   | `/auth/reset-password`  | Sets a new password using the provided reset token.                             |
+| POST   | `/auth/change-password` | Changes the password for a logged-in user if old password is correct.           |
+| POST   | `/auth/logout`      | Invalidates the user's refresh token to end the session.                             |
+
+### Admin Routes (`/admin/...`)
+| Method | Endpoint                  | Description                                                       |
+|--------|---------------------------|-------------------------------------------------------------------|
+| GET    | `/admin/users`           | Lists all users (email, role, timestamps).                        |
+| POST   | `/admin/users`           | Creates a new user (admin can specify role, e.g., `ADMIN` or `USER`). |
+| PUT    | `/admin/users/:id`       | Updates a user (e.g., email, password, role).                     |
+| DELETE | `/admin/users/:id`       | Deletes a user by ID.                                             |
+
+> **Note**: All `/admin/...` routes require an **access token** belonging to a user with **role = ADMIN**. Any non-Admin user will receive a **403 Forbidden**.
 
 ---
 
 ## Installation and Setup
 
 1. **Clone the repository**:
-
    ```bash
    git clone https://github.com/YourOrg/medecare-be.git
    cd medecare-be
-
 ```
 
 2. **Install Node.js dependencies**:
@@ -75,7 +102,7 @@ project-root/ ├─ src/ │ ├─ config/ # Configuration files (passport, en
     npm install
     ```
     
-3. **Install MS SQL Server** if you haven't already, or ensure you have access to a running MS SQL instance.
+3. **Install MS SQL Server** if not already available, or ensure you have access to a running MS SQL instance.
     
 4. **Set environment variables** by creating a copy of `.env.example`:
     
@@ -101,9 +128,8 @@ project-root/ ├─ src/ │ ├─ config/ # Configuration files (passport, en
 |`JWT_SECRET`|Secret key for signing JWTs|`your_jwt_secret_here`|
 |`SENDGRID_API_KEY`|SendGrid API key for sending password reset emails|`SG.xxxxxxxx`|
 |`PORT`|Port on which the Express app will listen|`3000`|
-|...|Additional environment variables can be documented here|...|
 
-You can store these in `.env.local` for local dev. For production, you may set these as **System Environment Variables** on Windows Server or use a secure config manager.
+Store these in `.env.local` for local dev. For production, set them as **System Environment Variables** or another secure method.
 
 ---
 
@@ -130,9 +156,9 @@ This project uses **Prisma** to manage database schema and migrations. For local
     npm run dev
     ```
     
-    By default, the server will run on [http://localhost:3000](http://localhost:3000/).
+    By default, the server runs on [http://localhost:3000](http://localhost:3000/).
     
-2. **Test the endpoints** (e.g., using Postman or cURL). For instance:
+2. **Test the endpoints** (e.g., using Postman or cURL). For example:
     
     ```bash
     curl http://localhost:3000/auth/register
@@ -152,72 +178,69 @@ This project uses **Prisma** to manage database schema and migrations. For local
 ### 1. Install Node.js and iisnode
 
 - Ensure you have **Node.js** installed on your Windows Server.
-- Install [**iisnode**](https://github.com/tjanczuk/iisnode) so that IIS can handle Node.js applications.  
-    Typically, you can download and run the iisnode MSI package for your version of Windows.
+- Install [**iisnode**](https://github.com/tjanczuk/iisnode).
 
 ### 2. Configure IIS
 
 1. Open **IIS Manager** (`inetmgr`).
 2. Right-click **Sites** > **Add Website**:
-    - Set a **Site name** (e.g., `MedEcareApp`).
-    - Set the **Physical path** to your project’s folder (where `web.config` and `package.json` reside).
-    - Set the **Binding** (e.g., `http` on `*:80`, or use SSL if you have a certificate).
-3. In **Site Features**, ensure that you have installed the **iisnode** module. If not, re-install iisnode.
+    - Site name: e.g., `MedEcareApp`
+    - Physical path: your project folder
+    - Binding: e.g., `http` on `*:80` or use SSL if you have a certificate
+3. Ensure **iisnode** is installed and recognized by IIS.
 
 ### 3. Prepare the Production Build (if needed)
 
-- This project is written in TypeScript. In production, you can run:
+- Compile TypeScript to JavaScript for better performance:
     
     ```bash
     npm run build
     ```
     
-    This command will output the compiled JavaScript files to the `dist` folder.
-- If you prefer to run TypeScript directly in production (not recommended), then you can skip this step and rely on **ts-node**. However, for best performance, using a compiled `dist/` output is recommended.
+- This outputs transpiled files to `dist/`.
 
-### 4. Deploy and Configure **web.config**
+### 4. Deploy and Configure `web.config`
 
-- A sample `web.config` is included at the root of this project. This file instructs IIS to use iisnode to host the app.
-- The key line is the `<handlers>` section with `iisnode` as the handler for `.js` requests, and the `nodeProcessCommandLine` specifying `node.exe`.
-- Adjust the paths if your build output or main file differs.
+- A sample `web.config` can instruct IIS to route `.js` requests via iisnode.
+- Adjust settings (like `nodeProcessCommandLine`, `stdoutLogFile`, etc.) as needed.
 
-### 5. Set Up Environment Variables or .env.local
+### 5. Set Up Environment Variables or `.env.local`
 
-- On Windows Server, you have options:
-    1. Set system environment variables via **System Properties** > **Environment Variables**.
-    2. Place a `.env.local` in the same folder as your app with the required values.  
-        Make sure `web.config` allows your Node.js process to read that file (or ensure you do not commit it to source control).
-- In production, ensure your `DB_URL` and `JWT_SECRET` are set to secure, production-appropriate values.
+- On Windows Server, you may:
+    - Set environment variables at the system level, or
+    - Place a `.env.local` in the project folder.
+- Make sure `JWT_SECRET`, `DB_URL`, etc., are properly set in production.
 
 ### 6. Verify Application
 
-- Once everything is in place, **restart** your new site in IIS.
-- Navigate to the domain or IP address you bound in Step 2. You should see the Node.js application responding (you can confirm by hitting the `/` endpoint, which returns the welcome message).
-- Monitor the **IIS logs** or the Node logs (if enabled) for any startup errors.
+- Restart your site in IIS.
+- Navigate to the domain or IP to ensure the Node.js application responds.
+- Check logs if encountering any errors.
 
 ---
 
 ## Testing
 
-For local or CI-based testing, you can run:
+For local or CI-based testing:
 
 ```bash
 npm test
 ```
 
-This uses **Jest** and **supertest** to run integration tests. If you want to run tests in a Windows environment, ensure your environment variables and local dependencies are all set up.
+This uses **Jest** and **supertest** for integration tests. For production, ensure a separate test DB or environment as needed.
 
 ---
 
 ## Additional Notes and Troubleshooting
 
-1. **iisnode Logging**: If you need more verbose logging, you can configure `stdoutLogFile` in `web.config` to store logs somewhere on the server (e.g., `C:\inetpub\logs\iisnode\myapp\output.log`).
-2. **Accessing environment variables**: In production, confirm that your environment variables are actually read by the Node.js process. You can do so by logging them out for debugging or using a small route to inspect `process.env`.
-3. **SSL**: If you want to serve this app over HTTPS, configure a certificate binding in IIS. iisnode can still handle the Node process behind the scenes.
-4. **Performance considerations**: If you expect heavy traffic, consider using **PM2** or similar process managers outside of IIS. Alternatively, you can load balance with multiple IIS worker processes or other approaches.
+1. **iisnode Logging**: Configure `stdoutLogFile` in `web.config` to get logs on your server.
+2. **SSL**: Configure certificate bindings in IIS for HTTPS traffic.
+3. **Performance**: For high-traffic scenarios, consider PM2 or other load-balancing solutions.
 
 ---
 
 ## License
 
-This project is provided under the [MIT License](https://opensource.org/licenses/MIT). Please see the [LICENSE](https://chatgpt.com/c/LICENSE) file for more details.
+This project is provided under the [MIT License](https://opensource.org/licenses/MIT). See the [LICENSE](https://chatgpt.com/c/LICENSE) file for details.
+
+---
