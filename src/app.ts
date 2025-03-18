@@ -8,6 +8,7 @@
  * - Configures global middleware (JSON, urlencoded, morgan)
  * - Defines a basic health-check route
  * - Initializes Passport strategies
+ * - Mounts auth-related routes under /auth
  *
  * @notes
  * - This file does not start the server; it only configures and exports the app
@@ -22,6 +23,9 @@ import { loadEnv } from './config/env';
 
 // Import passport strategies so they're configured on import
 import './config/passport-strategies';
+
+// Import the new auth routes
+import authRoutes from './routes/auth-routes';
 
 // 1. Load environment variables
 loadEnv();
@@ -43,5 +47,8 @@ app.get('/', (req: Request, res: Response) => {
     .status(200)
     .send('Hello from the Node.js Authentication & REST API Server!');
 });
+
+// 6. Mount the authentication routes on /auth
+app.use('/auth', authRoutes);
 
 export default app;
