@@ -20,7 +20,7 @@ This repository contains a Node.js backend server built with:
 - [Project Structure](#project-structure)
 - [API Endpoints](#api-endpoints)
 - [Installation and Setup](#installation-and-setup)
-  - [Environment Variables](#environment-variables)
+  - [Environment Variables](#environment-variables-1)
   - [Database Configuration](#database-configuration)
 - [Running the App Locally (Development)](#running-the-app-locally-development)
 - [Deployment to Windows Server & IIS](#deployment-to-windows-server--iis)
