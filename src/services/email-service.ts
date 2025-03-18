@@ -24,8 +24,8 @@
  */
 
 import sgMail from '@sendgrid/mail';
-import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'sendgrid';
 
@@ -66,7 +66,7 @@ if (EMAIL_PROVIDER === 'nodemailer') {
 
 /**
  * @function sendEmail
- * @description Sends an email using the selected provider. 
+ * @description Sends an email using the selected provider.
  * If EMAIL_PROVIDER is not set, defaults to SendGrid.
  *
  * @param {string} recipient - The destination email address
@@ -166,4 +166,3 @@ export async function sendResetEmail(
 
   await sendEmail(recipient, subject, text, html);
 }
-
