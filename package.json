@@ -22,7 +22,7 @@
     "sendgrid",
     "jwt"
   ],
-  "author": "Your Name",
+  "author": "Jef Smet",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^4.0.0",
