@@ -1,11 +1,12 @@
 /**
  * @description
  * The Auth Routes file defines all the endpoints related to authentication,
- * such as /register, /login, /forgot-password, etc.
+ * such as /register, /login, /refresh, /forgot-password, etc.
  *
  * Key features:
  * - POST /auth/register: Registers a new user
  * - POST /auth/login: Logs in a user, returning JWT tokens
+ * - POST /auth/refresh: Exchanges an existing refresh token for a new pair
  *
  * @dependencies
  * - express: for creating a Router.
@@ -16,7 +17,7 @@
  */
 
 import { Router } from 'express';
-import { register, login } from '../controllers/auth-controller';
+import { register, login, refreshToken } from '../controllers/auth-controller';
 
 const router = Router();
 
@@ -42,6 +43,17 @@ router.post('/register', register);
  *   }
  */
 router.post('/login', login);
+
+/**
+ * POST /auth/refresh
+ * ----------------------------------------------------------------------------
+ * Refreshes tokens using an existing refresh token. Expects:
+ *   {
+ *     "refreshToken": "<valid refresh token>",
+ *     "platform": "web" | "mobile" (optional)
+ *   }
+ */
+router.post('/refresh', refreshToken);
 
 export default router;
 
