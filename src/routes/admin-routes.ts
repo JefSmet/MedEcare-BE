@@ -2,21 +2,10 @@
  * @description
  * Defines all the routes for administrator-level user management.
  *
- * Key features:
- * - GET /admin/users: List all users
- * - POST /admin/users: Create a new user
- * - PUT /admin/users/:id: Update an existing user
- * - DELETE /admin/users/:id: Delete a user
- *
- * @dependencies
- * - express: for creating Router
- * - admin-controller: implements the actual logic
- * - jwtAuth: ensures the user is logged in
- * - requireAdmin: ensures the user is admin
- *
- * @notes
- * - These routes are mounted in app.ts at /admin
- * - All routes here require admin privileges to access
+ * @openapi
+ * tags:
+ *   name: Admin
+ *   description: Admin endpoints for user management
  */
 
 import { Router } from 'express';
@@ -29,34 +18,92 @@ import {
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
 
+/**
+ * @openapi
+ * /admin/users:
+ *   get:
+ *     summary: Retrieve a list of all users
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of users
+ *   post:
+ *     summary: Create a new user
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *
+ * /admin/users/{id}:
+ *   put:
+ *     summary: Update an existing user
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User updated
+ *       404:
+ *         description: User not found
+ *   delete:
+ *     summary: Delete a user
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Deletion message
+ *       404:
+ *         description: User not found
+ */
+
 const router = Router();
 
-/**
- * GET /admin/users
- * Retrieves a list of all users.
- * Requires authentication & admin role.
- */
 router.get('/users', jwtAuth, requireAdmin, listUsers);
-
-/**
- * POST /admin/users
- * Creates a new user with the specified role & password.
- * Requires authentication & admin role.
- */
 router.post('/users', jwtAuth, requireAdmin, createNewUser);
-
-/**
- * PUT /admin/users/:id
- * Updates an existing user. Can update email, password, role, etc.
- * Requires authentication & admin role.
- */
 router.put('/users/:id', jwtAuth, requireAdmin, updateExistingUser);
-
-/**
- * DELETE /admin/users/:id
- * Deletes a user by ID.
- * Requires authentication & admin role.
- */
 router.delete('/users/:id', jwtAuth, requireAdmin, deleteExistingUser);
 
 export default router;

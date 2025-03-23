@@ -28,6 +28,10 @@ import shiftTypeRateRoutes from './routes/shift-type-rate-routes';
 import shiftTypeRoutes from './routes/shift-type-routes';
 import userConstraintRoutes from './routes/user-constraint-routes';
 
+// Step 3 imports for Swagger
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger';
+
 // 1. Load environment variables
 loadEnv();
 
@@ -62,5 +66,8 @@ app.use('/admin/shift-types', shiftTypeRoutes);
 app.use('/admin/shift-type-rates', shiftTypeRateRoutes);
 app.use('/admin/activities', activityRoutes);
 app.use('/admin/user-constraints', userConstraintRoutes);
+
+// 9. Swagger UI route
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 export default app;
