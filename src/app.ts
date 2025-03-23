@@ -4,16 +4,12 @@
  *
  * Key features:
  * - Initializes Express
- * - Loads environment variables (via config/env.ts)
- * - Configures global middleware (JSON, urlencoded, morgan)
+ * - Loads environment variables
+ * - Configures global middleware
  * - Defines a basic health-check route
  * - Initializes Passport strategies
  * - Mounts auth-related routes under /auth
- * - Mounts admin-related routes under /admin
- *
- * @notes
- * - This file does not start the server; it only configures and exports the app
- * - Additional middlewares and route registrations may be added in future steps
+ * - Mounts admin-related routes and new model routes under /admin
  */
 
 import express, { Request, Response } from 'express';
@@ -21,13 +17,16 @@ import morgan from 'morgan';
 import passport from 'passport';
 
 import { loadEnv } from './config/env';
-
-// Import passport strategies so they're configured on import
-import './config/passport-strategies';
-
-// Import the new routes
+import './config/passport-strategies'; // ensure strategies are loaded
 import adminRoutes from './routes/admin-routes';
 import authRoutes from './routes/auth-routes';
+
+import activityRoutes from './routes/activity-routes';
+import personRoutes from './routes/person-routes';
+import roleRoutes from './routes/role-routes';
+import shiftTypeRateRoutes from './routes/shift-type-rate-routes';
+import shiftTypeRoutes from './routes/shift-type-routes';
+import userConstraintRoutes from './routes/user-constraint-routes';
 
 // 1. Load environment variables
 loadEnv();
@@ -53,8 +52,15 @@ app.get('/', (req: Request, res: Response) => {
 // 6. Mount the authentication routes on /auth
 app.use('/auth', authRoutes);
 
-// 7. Mount the admin routes on /admin
-//    These routes require the user to be an Admin (handled in admin-routes).
+// 7. Existing admin routes from admin-routes.ts
 app.use('/admin', adminRoutes);
+
+// 8. Additional admin sub-routes for new models
+app.use('/admin/persons', personRoutes);
+app.use('/admin/roles', roleRoutes);
+app.use('/admin/shift-types', shiftTypeRoutes);
+app.use('/admin/shift-type-rates', shiftTypeRateRoutes);
+app.use('/admin/activities', activityRoutes);
+app.use('/admin/user-constraints', userConstraintRoutes);
 
 export default app;
