@@ -85,7 +85,7 @@ router.post('/register', register);
  *                 type: string
  *               platform:
  *                 type: string
- *                 description: 'web' or 'mobile'
+ *                 description: "Possible values: web or mobile"
  *     responses:
  *       200:
  *         description: Login successful; returns user info and JWT tokens
