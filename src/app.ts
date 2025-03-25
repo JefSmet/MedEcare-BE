@@ -28,7 +28,7 @@ import shiftTypeRateRoutes from './routes/shift-type-rate-routes';
 import shiftTypeRoutes from './routes/shift-type-routes';
 import userConstraintRoutes from './routes/user-constraint-routes';
 
-// Step 3 imports for Swagger
+// Swagger UI imports
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger';
 
@@ -67,7 +67,13 @@ app.use('/admin/shift-type-rates', shiftTypeRateRoutes);
 app.use('/admin/activities', activityRoutes);
 app.use('/admin/user-constraints', userConstraintRoutes);
 
-// 9. Swagger UI route
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// 9. Swagger UI route (with customSiteTitle)
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'MedEcare Docs', // <-- This changes the browser tab title
+  }),
+);
 
 export default app;
