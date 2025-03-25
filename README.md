@@ -1,4 +1,4 @@
-# MedEcare-BE changed
+# MedEcare-BE
 
 This repository contains a Node.js backend server built with:
 
