@@ -12,25 +12,26 @@
  * - Mounts admin-related routes and new model routes under /admin
  */
 
-import express, { Request, Response } from 'express';
-import morgan from 'morgan';
-import passport from 'passport';
+import express, { Request, Response } from "express";
+import morgan from "morgan";
+import passport from "passport";
+import cors from "cors";
 
-import { loadEnv } from './config/env';
-import './config/passport-strategies'; // ensure strategies are loaded
-import adminRoutes from './routes/admin-routes';
-import authRoutes from './routes/auth-routes';
+import { loadEnv } from "./config/env";
+import "./config/passport-strategies"; // ensure strategies are loaded
+import adminRoutes from "./routes/admin-routes";
+import authRoutes from "./routes/auth-routes";
 
-import activityRoutes from './routes/activity-routes';
-import personRoutes from './routes/person-routes';
-import roleRoutes from './routes/role-routes';
-import shiftTypeRateRoutes from './routes/shift-type-rate-routes';
-import shiftTypeRoutes from './routes/shift-type-routes';
-import userConstraintRoutes from './routes/user-constraint-routes';
+import activityRoutes from "./routes/activity-routes";
+import personRoutes from "./routes/person-routes";
+import roleRoutes from "./routes/role-routes";
+import shiftTypeRateRoutes from "./routes/shift-type-rate-routes";
+import shiftTypeRoutes from "./routes/shift-type-routes";
+import userConstraintRoutes from "./routes/user-constraint-routes";
 
 // Swagger UI imports
-import swaggerUi from 'swagger-ui-express';
-import swaggerSpec from './config/swagger';
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./config/swagger";
 
 // 1. Load environment variables
 loadEnv();
@@ -39,41 +40,42 @@ loadEnv();
 const app = express();
 
 // 3. Global middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 
 // 4. Initialize passport
 app.use(passport.initialize());
 
 // 5. Basic route for health check
-app.get('/', (req: Request, res: Response) => {
+app.get("/", (req: Request, res: Response) => {
   res
     .status(200)
-    .send('Hello from the Node.js Authentication & REST API Server!');
+    .send("Hello from the Node.js Authentication & REST API Server!");
 });
 
 // 6. Mount the authentication routes on /auth
-app.use('/auth', authRoutes);
+app.use("/auth", authRoutes);
 
 // 7. Existing admin routes from admin-routes.ts
-app.use('/admin', adminRoutes);
+app.use("/admin", adminRoutes);
 
 // 8. Additional admin sub-routes for new models
-app.use('/admin/persons', personRoutes);
-app.use('/admin/roles', roleRoutes);
-app.use('/admin/shift-types', shiftTypeRoutes);
-app.use('/admin/shift-type-rates', shiftTypeRateRoutes);
-app.use('/admin/activities', activityRoutes);
-app.use('/admin/user-constraints', userConstraintRoutes);
+app.use("/admin/persons", personRoutes);
+app.use("/admin/roles", roleRoutes);
+app.use("/admin/shift-types", shiftTypeRoutes);
+app.use("/admin/shift-type-rates", shiftTypeRateRoutes);
+app.use("/admin/activities", activityRoutes);
+app.use("/admin/user-constraints", userConstraintRoutes);
 
 // 9. Swagger UI route (with customSiteTitle)
 app.use(
-  '/api-docs',
+  "/api-docs",
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
-    customSiteTitle: 'MedEcare Docs', // <-- This changes the browser tab title
-  }),
+    customSiteTitle: "MedEcare Docs", // <-- This changes the browser tab title
+  })
 );
 
 export default app;
