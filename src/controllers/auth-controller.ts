@@ -3,18 +3,14 @@
  * The Auth Controller file handles authentication-related endpoints such as
  * user registration, login, token refresh, password reset, etc.
  *
- * Key features:
- * - register: Validates input, checks password strength, creates user in DB (including Person link & role).
- * - login: Authenticates a user, returns JWT tokens.
- * - refreshToken: Exchanges refresh tokens for new ones.
- * - forgotPassword: Generates reset token, stores it, sends email.
- * - resetPassword: Verifies reset token, updates password.
- * - changePassword: Authenticated user changes their password.
- * - logout: Invalidates a refresh token.
+ * Key changes:
+ * - login: plaatst nu accessToken en refreshToken in HttpOnly cookies
+ * - refreshToken: leest refreshToken uit cookie, genereert nieuwe token, zet opnieuw in cookie
+ * - logout: wist de refreshToken-cookie
  *
  * @notes
- * - The user schema is now 1:1 with Person and M:N with Role. We flatten the roles
- *   in the Passport strategies, so user.roles is an array.
+ * - We verwijderen (grotendeels) de tokens uit de JSON-response.
+ * - De cookie-instellingen gebruiken { httpOnly: true, secure, sameSite }.
  */
 
 import crypto from 'crypto';
@@ -43,7 +39,7 @@ interface RegisterRequestBody {
   email?: string;
   password?: string;
   role?: string;
-  personId?: string; 
+  personId?: string;
 }
 
 export async function register(
@@ -68,7 +64,6 @@ export async function register(
       return;
     }
 
-    // createUser will handle linking the Person and attaching role
     const newUser = await createUser({ email, password, role, personId });
 
     res.status(201).json({
@@ -77,8 +72,6 @@ export async function register(
         id: newUser.id,
         email: newUser.email,
         personId: newUser.personId,
-        // We do not return roles array here, but you can if you want:
-        // roles: newUserRoles
       },
     });
   } catch (error: any) {
@@ -107,31 +100,40 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       const { platform = 'web' } = req.body as LoginRequestBody;
       const tokens = generateTokens(user, platform);
 
+      // Sla refresh token op in DB
       const refreshExpireDays = platform === 'mobile' ? 30 : 7;
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + refreshExpireDays);
 
       await storeRefreshToken(user.id, tokens.refreshToken, expiresAt);
 
+      // Zet tokens in HttpOnly cookies
+      const isProd = process.env.NODE_ENV === 'production';
+      res.cookie('accessToken', tokens.accessToken, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'strict',
+      });
+      res.cookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'strict',
+      });
+
+      // Stuur enkel wat basisinfo terug
       res.status(200).json({
         message: 'Login succesvol.',
         user: {
           id: user.id,
           email: user.email,
-          roles: user.roles, // Flattened roles array
+          roles: user.roles,
           personId: user.personId,
         },
-        tokens,
       });
     } catch (tokenError) {
       next(tokenError);
     }
   })(req, res, next);
-}
-
-interface RefreshTokenRequestBody {
-  refreshToken?: string;
-  platform?: 'web' | 'mobile';
 }
 
 export async function refreshToken(
@@ -140,11 +142,10 @@ export async function refreshToken(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const { refreshToken, platform = 'web' } =
-      req.body as RefreshTokenRequestBody;
-
+    // Haal de refreshToken uit de HttpOnly cookie
+    const refreshToken = req.cookies?.refreshToken;
     if (!refreshToken) {
-      res.status(400).json({ error: 'Missing refreshToken field.' });
+      res.status(400).json({ error: 'Geen refreshToken cookie aanwezig.' });
       return;
     }
 
@@ -154,7 +155,7 @@ export async function refreshToken(
     try {
       payload = jwt.verify(refreshToken, secret);
     } catch (verifyError) {
-      res.status(401).json({ error: 'Invalid or expired refresh token.' });
+      res.status(401).json({ error: 'Invalid of verlopen refresh token.' });
       return;
     }
 
@@ -162,29 +163,44 @@ export async function refreshToken(
     if (!existingRefresh) {
       res
         .status(404)
-        .json({ error: 'Refresh token not found or already invalidated.' });
+        .json({ error: 'Refresh token niet gevonden of al ongeldig gemaakt.' });
       return;
     }
 
     if (existingRefresh.expiresAt < new Date()) {
       await removeRefreshToken(refreshToken);
-      res.status(401).json({ error: 'Refresh token has expired.' });
+      res.status(401).json({ error: 'Refresh token is verlopen.' });
       return;
     }
 
+    // Oude refresh token wissen in DB (one-time usage)
     await removeRefreshToken(refreshToken);
 
     const userId = payload.id;
+    const { platform = 'web' } = req.body; // Optioneel als je `platform` wilt blijven doorgeven
     const newTokens = generateTokens({ id: userId } as any, platform);
+
     const refreshExpireDays = platform === 'mobile' ? 30 : 7;
     const newExpiresAt = new Date();
     newExpiresAt.setDate(newExpiresAt.getDate() + refreshExpireDays);
 
     await storeRefreshToken(userId, newTokens.refreshToken, newExpiresAt);
 
+    // Zet nieuwe tokens in cookies
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('accessToken', newTokens.accessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+    });
+    res.cookie('refreshToken', newTokens.refreshToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+    });
+
     res.status(200).json({
-      message: 'Tokens refreshed successfully.',
-      tokens: newTokens,
+      message: 'Tokens succesvol vernieuwd.',
     });
   } catch (error: any) {
     next(error);
@@ -352,11 +368,26 @@ export async function logout(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const { refreshToken } = req.body as LogoutRequestBody;
+    // Haal de refreshToken uit de cookie
+    const refreshToken = req.cookies?.refreshToken;
+
+    // In alle gevallen clearen we de cookie in de response
+    const isProd = process.env.NODE_ENV === 'production';
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+    });
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+    });
 
     if (!refreshToken) {
+      // Als er geen refreshToken cookie was, is de logout ook in orde
       res.status(200).json({
-        message: 'Logout successful (no token provided).',
+        message: 'Logout succesvol (geen token aanwezig).',
       });
       return;
     }
@@ -364,12 +395,13 @@ export async function logout(
     try {
       await removeRefreshToken(refreshToken);
       res.status(200).json({
-        message: 'Logout successful. Refresh token invalidated.',
+        message: 'Logout succesvol. Refresh token ongeldig gemaakt.',
       });
     } catch (removeError: any) {
       if (removeError.code === 'P2025') {
+        // Token bestond niet in DB
         res.status(200).json({
-          message: 'Logout successful. Token was not found in DB.',
+          message: 'Logout succesvol. Token stond niet (meer) in DB.',
         });
       } else {
         throw removeError;
@@ -379,4 +411,3 @@ export async function logout(
     next(error);
   }
 }
-

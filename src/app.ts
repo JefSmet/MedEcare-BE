@@ -16,6 +16,7 @@ import express, { Request, Response } from "express";
 import morgan from "morgan";
 import passport from "passport";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import { loadEnv } from "./config/env";
 import "./config/passport-strategies"; // ensure strategies are loaded
@@ -40,10 +41,18 @@ loadEnv();
 const app = express();
 
 // 3. Global middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_ORIGIN, // Use value from .env file
+    credentials: true, // Allow credentials
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+app.use(cookieParser()); // ← HttpOnly cookies correct kunnen parsen
 
 // 4. Initialize passport
 app.use(passport.initialize());

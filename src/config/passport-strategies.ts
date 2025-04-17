@@ -14,17 +14,22 @@
  *
  * @notes
  * - The Local Strategy expects `req.body.email` and `req.body.password`.
- * - The JWT Strategy expects a token with payload containing userId or id.
+ * - The JWT Strategy expects a token in an HttpOnly cookie (hier aangepast).
  * - We flatten the userRoles into an array of role names (user.roles = ['ADMIN', 'USER', etc.]).
  */
 
 import { PrismaClient, User, UserRole, Role } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
-import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import { Strategy as LocalStrategy } from 'passport-local';
+import {
+  Strategy as JwtStrategy,
+  StrategyOptions,
+  ExtractJwt,
+  VerifiedCallback,
+} from 'passport-jwt';
+import { Request } from 'express';
 
-// 1. Create an extended interface for the user that includes userRoles and a 'roles' property
 interface UserWithRoles extends User {
   userRoles: (UserRole & {
     role: Role;
@@ -48,7 +53,6 @@ const localOpts = {
 passport.use(
   new LocalStrategy(localOpts, async (email, password, done) => {
     try {
-      // 2. Find user by email, including userRoles -> role
       const user = (await prisma.user.findUnique({
         where: { email: email },
         include: {
@@ -66,7 +70,6 @@ passport.use(
         });
       }
 
-      // 3. Compare password with stored hash
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return done(null, false, {
@@ -74,10 +77,7 @@ passport.use(
         });
       }
 
-      // 4. Flatten roles into an array of strings
       user.roles = user.userRoles.map((ur) => ur.role.name);
-
-      // 5. Return user
       return done(null, user);
     } catch (error) {
       return done(error);
@@ -86,21 +86,31 @@ passport.use(
 );
 
 /**
+ * Cookie Extractor
+ * ----------------------------------------------------------------------------
+ * Haalt de JWT uit de HttpOnly cookie 'accessToken'.
+ */
+function cookieExtractor(req: Request): string | null {
+  if (req && req.cookies && req.cookies.accessToken) {
+    return req.cookies.accessToken;
+  }
+  return null;
+}
+
+/**
  * JWT Strategy
  * ----------------------------------------------------------------------------
- * Authenticates requests based on JWT tokens.
- * Token is typically in the Authorization header as "Bearer <token>"
- * The JWT payload must contain { id: string } referencing the user ID.
+ * Authenticates requests based on a JWT token in de HttpOnly cookie.
+ * Het payload object bevat { id: string } met de user ID.
  */
-const jwtOpts = {
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.JWT_SECRET || 'changeme', // Fallback for dev if not set
+const jwtOpts: StrategyOptions = {
+  jwtFromRequest: cookieExtractor,
+  secretOrKey: process.env.JWT_SECRET || 'changeme',
 };
 
 passport.use(
-  new JwtStrategy(jwtOpts, async (payload, done) => {
+  new JwtStrategy(jwtOpts, async (payload: any, done: VerifiedCallback) => {
     try {
-      // 6. Lookup user by the id in the JWT payload, including userRoles -> role
       const user = (await prisma.user.findUnique({
         where: { id: payload.id },
         include: {
@@ -118,9 +128,7 @@ passport.use(
         });
       }
 
-      // 7. Flatten roles into an array of strings
       user.roles = user.userRoles.map((ur) => ur.role.name);
-
       return done(null, user);
     } catch (error) {
       return done(error, false);
@@ -138,4 +146,3 @@ passport.use(
 export function initPassportStrategies(): void {
   return;
 }
-
