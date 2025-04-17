@@ -1,20 +1,12 @@
 /**
  * @description
- * This file configures swagger-jsdoc to generate the OpenAPI specification for our app.
+ * Dit bestand configureert swagger-jsdoc om de OpenAPI-specificatie voor onze app te genereren.
  *
- * Key features:
- * - Sets OpenAPI to 3.0.0
- * - Defines API info (title, version, description)
- * - Declares security schemes (BearerAuth) for JWT usage
- * - Exports the swaggerSpec to be used by swagger-ui-express
- *
- * @dependencies
- * - swagger-jsdoc: For generating the spec from JSDoc comments
- *
- * @notes
- * - Additional configuration like servers, tags, etc., can be added as needed.
- * - We reference the "src/routes" or "src/controllers" directories (depending on JSDoc usage)
- *   so that swagger-jsdoc can pick up the annotations in those files.
+ * Hoofdpunten:
+ * - Stelt openapi in op 3.0.0
+ * - Definieert API-info (title, version, description)
+ * - DECLAREERT nu CookieAuth (i.p.v. BearerAuth) voor JWT via HttpOnly cookies
+ * - Exporteert de swaggerSpec die door swagger-ui-express wordt gebruikt
  */
 
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -30,20 +22,21 @@ const options = {
     },
     components: {
       securitySchemes: {
-        BearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
+        CookieAuth: {
+          type: 'apiKey',
+          in: 'cookie',
+          name: 'accessToken',
         },
       },
     },
     security: [
       {
-        BearerAuth: [],
+        CookieAuth: [],
       },
     ],
   },
   apis: [
-    // Adjust these globs or paths to wherever you've annotated your endpoints
+    // Aanpassen aan de locaties waar je JSDoc/Swagger in de code bijhoudt
     path.join(__dirname, '../routes/*.ts'),
     path.join(__dirname, '../controllers/*.ts'),
   ],

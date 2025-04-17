@@ -1,11 +1,11 @@
 /**
  * @description
- * Defines routes for Person CRUD, protected by admin role.
+ * Routes voor Person-CRUD, alleen voor admin.
  *
  * @openapi
  * tags:
  *   name: Person
- *   description: CRUD endpoints for Persons
+ *   description: CRUD endpoints voor Persons
  */
 
 import { Router } from 'express';
@@ -25,18 +25,18 @@ const router = Router();
  * @openapi
  * /admin/persons:
  *   get:
- *     summary: List all persons
+ *     summary: Lijst alle persons
  *     tags: [Person]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: A list of persons.
+ *         description: Lijst van personen
  *   post:
- *     summary: Create a new person
+ *     summary: Maak een nieuwe person aan
  *     tags: [Person]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -50,40 +50,37 @@ const router = Router();
  *                 type: string
  *     responses:
  *       201:
- *         description: The newly created Person.
+ *         description: De nieuw aangemaakte persoon
  *
  * /admin/persons/{id}:
  *   get:
- *     summary: Get person by ID
+ *     summary: Haal een persoon op
  *     tags: [Person]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The Person ID
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Returns the requested person.
+ *         description: De gevraagde persoon
  *       404:
- *         description: Person not found.
+ *         description: Niet gevonden
  *   put:
- *     summary: Update a person
+ *     summary: Update een persoon
  *     tags: [Person]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The Person ID
  *         schema:
  *           type: string
  *     requestBody:
- *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -95,28 +92,26 @@ const router = Router();
  *                 type: string
  *     responses:
  *       200:
- *         description: The updated Person.
+ *         description: De geüpdatete persoon
  *       404:
- *         description: Person not found.
+ *         description: Niet gevonden
  *   delete:
- *     summary: Delete a person
+ *     summary: Verwijder een persoon
  *     tags: [Person]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The Person ID
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion message.
+ *         description: Verwijdering is gelukt
  *       404:
- *         description: Person not found.
+ *         description: Niet gevonden
  */
-
 router.get('/', jwtAuth, requireAdmin, listPersons);
 router.post('/', jwtAuth, requireAdmin, createPerson);
 router.get('/:id', jwtAuth, requireAdmin, getPersonById);

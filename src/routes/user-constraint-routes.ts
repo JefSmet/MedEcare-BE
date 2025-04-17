@@ -1,11 +1,11 @@
 /**
  * @description
- * Routes for UserConstraint CRUD, protected by admin role.
+ * Routes voor UserConstraint-CRUD, enkel voor admin.
  *
  * @openapi
  * tags:
  *   name: UserConstraint
- *   description: Endpoints for managing user constraints
+ *   description: Endpoints voor beheren van constraints per user/person
  */
 
 import { Router } from 'express';
@@ -23,18 +23,18 @@ import { requireAdmin } from '../middleware/role-middleware';
  * @openapi
  * /admin/user-constraints:
  *   get:
- *     summary: List all user constraints
+ *     summary: Lijst alle user constraints
  *     tags: [UserConstraint]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Array of user constraints
+ *         description: Lijst van user constraints
  *   post:
- *     summary: Create a new user constraint
+ *     summary: Maak een nieuwe user constraint aan
  *     tags: [UserConstraint]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -52,14 +52,14 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 type: number
  *     responses:
  *       201:
- *         description: The newly created user constraint
+ *         description: De nieuw aangemaakte constraint
  *
  * /admin/user-constraints/{id}:
  *   get:
- *     summary: Get a user constraint by ID
+ *     summary: Haal een constraint op
  *     tags: [UserConstraint]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -68,14 +68,14 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: The requested user constraint
+ *         description: De gevraagde constraint
  *       404:
- *         description: Not found
+ *         description: Niet gevonden
  *   put:
- *     summary: Update a user constraint
+ *     summary: Update een constraint
  *     tags: [UserConstraint]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -99,14 +99,14 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 type: number
  *     responses:
  *       200:
- *         description: The updated user constraint
+ *         description: Geüpdatet
  *       404:
- *         description: Not found
+ *         description: Niet gevonden
  *   delete:
- *     summary: Delete a user constraint
+ *     summary: Verwijder een constraint
  *     tags: [UserConstraint]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -115,11 +115,10 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion message
+ *         description: Constraint verwijderd
  *       404:
- *         description: Not found
+ *         description: Niet gevonden
  */
-
 const router = Router();
 
 router.get('/', jwtAuth, requireAdmin, listUserConstraints);

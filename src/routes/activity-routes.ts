@@ -1,11 +1,11 @@
 /**
  * @description
- * Routes for Activity CRUD, protected by admin.
+ * Routes voor Activity CRUD, alleen toegankelijk voor admin.
  *
  * @openapi
  * tags:
  *   name: Activity
- *   description: Endpoints for managing activities
+ *   description: Endpoints voor activiteiten (shiften/verlof/etc.)
  */
 
 import { Router } from 'express';
@@ -25,18 +25,18 @@ const router = Router();
  * @openapi
  * /admin/activities:
  *   get:
- *     summary: List all activities
+ *     summary: Lijst alle activiteiten
  *     tags: [Activity]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Returns a list of all activities.
+ *         description: Geeft een lijst van alle activiteiten
  *   post:
- *     summary: Create a new activity
+ *     summary: Maak een nieuwe activiteit aan
  *     tags: [Activity]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -58,40 +58,37 @@ const router = Router();
  *                 type: string
  *     responses:
  *       201:
- *         description: The newly created activity.
+ *         description: De nieuw aangemaakte activiteit
  *
  * /admin/activities/{id}:
  *   get:
- *     summary: Get a specific activity by ID
+ *     summary: Haal één activiteit op
  *     tags: [Activity]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The activity ID
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: The requested activity.
+ *         description: De opgevraagde activiteit
  *       404:
- *         description: Activity not found.
+ *         description: Niet gevonden
  *   put:
- *     summary: Update an existing activity
+ *     summary: Update een bestaande activiteit
  *     tags: [Activity]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The activity ID
  *         schema:
  *           type: string
  *     requestBody:
- *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -111,28 +108,26 @@ const router = Router();
  *                 type: string
  *     responses:
  *       200:
- *         description: The updated activity.
+ *         description: De geüpdatete activiteit
  *       404:
- *         description: Activity not found.
+ *         description: Niet gevonden
  *   delete:
- *     summary: Delete an activity
+ *     summary: Verwijder een activiteit
  *     tags: [Activity]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The activity ID
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: A message confirming deletion.
+ *         description: Succes-bericht
  *       404:
- *         description: Activity not found.
+ *         description: Niet gevonden
  */
-
 router.get('/', jwtAuth, requireAdmin, listActivities);
 router.post('/', jwtAuth, requireAdmin, createActivity);
 router.get('/:id', jwtAuth, requireAdmin, getActivityById);

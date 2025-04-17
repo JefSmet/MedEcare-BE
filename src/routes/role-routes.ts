@@ -1,11 +1,11 @@
 /**
  * @description
- * Defines routes for Role CRUD, protected by admin role.
+ * Routes voor Role-CRUD, alleen admin.
  *
  * @openapi
  * tags:
  *   name: Role
- *   description: Endpoints for managing roles
+ *   description: Endpoints voor het beheren van rollen
  */
 
 import { Router } from 'express';
@@ -23,18 +23,18 @@ import {
  * @openapi
  * /admin/roles:
  *   get:
- *     summary: List all roles
+ *     summary: Lijst alle rollen
  *     tags: [Role]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: A list of roles
+ *         description: Overzicht van alle rollen
  *   post:
- *     summary: Create a new role
+ *     summary: Maak een nieuwe rol aan
  *     tags: [Role]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -46,40 +46,37 @@ import {
  *                 type: string
  *     responses:
  *       201:
- *         description: The newly created role
+ *         description: Nieuw aangemaakte rol
  *
  * /admin/roles/{id}:
  *   get:
- *     summary: Get role by ID
+ *     summary: Haal een rol op
  *     tags: [Role]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The role ID
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: The requested role
+ *         description: De gevraagde rol
  *       404:
- *         description: Role not found
+ *         description: Niet gevonden
  *   put:
- *     summary: Update a role
+ *     summary: Update een rol
  *     tags: [Role]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The role ID
  *         schema:
  *           type: string
  *     requestBody:
- *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -89,28 +86,26 @@ import {
  *                 type: string
  *     responses:
  *       200:
- *         description: The updated role
+ *         description: De geüpdatete rol
  *       404:
- *         description: Role not found
+ *         description: Niet gevonden
  *   delete:
- *     summary: Delete a role
+ *     summary: Verwijder een rol
  *     tags: [Role]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The role ID
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion message
+ *         description: Verwijdering gelukt
  *       404:
- *         description: Role not found
+ *         description: Niet gevonden
  */
-
 const router = Router();
 
 router.get('/', jwtAuth, requireAdmin, listRoles);

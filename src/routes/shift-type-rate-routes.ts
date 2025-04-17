@@ -1,11 +1,11 @@
 /**
  * @description
- * Routes for ShiftTypeRate CRUD, protected by admin role.
+ * Routes voor ShiftTypeRate-CRUD, alleen admin.
  *
  * @openapi
  * tags:
  *   name: ShiftTypeRate
- *   description: Endpoints for managing shift type rates
+ *   description: Endpoints voor het beheren van tarieven per ShiftType
  */
 
 import { Router } from 'express';
@@ -23,18 +23,18 @@ import { requireAdmin } from '../middleware/role-middleware';
  * @openapi
  * /admin/shift-type-rates:
  *   get:
- *     summary: List shift type rates
+ *     summary: Lijst shift type rates
  *     tags: [ShiftTypeRate]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Returns an array of shift type rates
+ *         description: Array van shift type rates
  *   post:
- *     summary: Create a new shift type rate
+ *     summary: Maak een nieuw tarief aan
  *     tags: [ShiftTypeRate]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -54,14 +54,14 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 format: date-time
  *     responses:
  *       201:
- *         description: Created shift type rate
+ *         description: Nieuw tarief aangemaakt
  *
  * /admin/shift-type-rates/{id}:
  *   get:
- *     summary: Get a shift type rate by ID
+ *     summary: Haal een tarief op
  *     tags: [ShiftTypeRate]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -70,14 +70,14 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: The requested shift type rate
+ *         description: Gevonden tarief
  *       404:
- *         description: Not found
+ *         description: Niet gevonden
  *   put:
- *     summary: Update a shift type rate
+ *     summary: Update een bestaand tarief
  *     tags: [ShiftTypeRate]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -85,7 +85,6 @@ import { requireAdmin } from '../middleware/role-middleware';
  *         schema:
  *           type: string
  *     requestBody:
- *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -103,14 +102,14 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 format: date-time
  *     responses:
  *       200:
- *         description: The updated record
+ *         description: Geüpdatet record
  *       404:
- *         description: Not found
+ *         description: Niet gevonden
  *   delete:
- *     summary: Delete a shift type rate
+ *     summary: Verwijder een tarief
  *     tags: [ShiftTypeRate]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -119,11 +118,10 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion message
+ *         description: Verwijdering gelukt
  *       404:
- *         description: Not found
+ *         description: Niet gevonden
  */
-
 const router = Router();
 
 router.get('/', jwtAuth, requireAdmin, listShiftTypeRates);

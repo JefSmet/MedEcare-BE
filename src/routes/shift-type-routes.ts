@@ -1,11 +1,11 @@
 /**
  * @description
- * Routes for ShiftType CRUD, protected by admin.
+ * Routes voor ShiftType-CRUD, enkel admin.
  *
  * @openapi
  * tags:
  *   name: ShiftType
- *   description: Endpoints for managing shift types
+ *   description: Endpoints voor het beheren van shift types
  */
 
 import { Router } from 'express';
@@ -23,18 +23,18 @@ import { requireAdmin } from '../middleware/role-middleware';
  * @openapi
  * /admin/shift-types:
  *   get:
- *     summary: List all shift types
+ *     summary: Lijst alle shift types
  *     tags: [ShiftType]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Array of shift types
+ *         description: Array van shift types
  *   post:
- *     summary: Create a shift type
+ *     summary: Maak een nieuw ShiftType aan
  *     tags: [ShiftType]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -58,14 +58,14 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 format: date-time
  *     responses:
  *       201:
- *         description: The newly created shift type
+ *         description: Nieuw aangemaakt ShiftType
  *
  * /admin/shift-types/{id}:
  *   get:
- *     summary: Get shift type by ID
+ *     summary: Haal ShiftType op
  *     tags: [ShiftType]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -74,14 +74,14 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: The requested shift type
+ *         description: Het gevraagde ShiftType
  *       404:
- *         description: Shift type not found
+ *         description: Niet gevonden
  *   put:
- *     summary: Update a shift type
+ *     summary: Update een ShiftType
  *     tags: [ShiftType]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -89,7 +89,6 @@ import { requireAdmin } from '../middleware/role-middleware';
  *         schema:
  *           type: string
  *     requestBody:
- *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -111,14 +110,14 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 format: date-time
  *     responses:
  *       200:
- *         description: The updated shift type
+ *         description: Geüpdatete ShiftType
  *       404:
- *         description: Shift type not found
+ *         description: Niet gevonden
  *   delete:
- *     summary: Delete a shift type
+ *     summary: Verwijder een ShiftType
  *     tags: [ShiftType]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -127,11 +126,10 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion message
+ *         description: Verwijdering voltooid
  *       404:
- *         description: Shift type not found
+ *         description: Niet gevonden
  */
-
 const router = Router();
 
 router.get('/', jwtAuth, requireAdmin, listShiftTypes);

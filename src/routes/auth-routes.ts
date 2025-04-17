@@ -1,21 +1,11 @@
 /**
  * @description
- * The Auth Routes file defines all the endpoints related to authentication,
- * such as /register, /login, /refresh, /forgot-password, /reset-password, etc.
+ * De Auth Routes definieert alle endpoints gerelateerd aan authenticatie:
+ * /register, /login, /refresh, /forgot-password, /reset-password, /change-password, /logout
  *
- * Key features:
- * - POST /auth/register
- * - POST /auth/login
- * - POST /auth/refresh
- * - POST /auth/forgot-password
- * - POST /auth/reset-password
- * - POST /auth/change-password
- * - POST /auth/logout
- *
- * @openapi
- * tags:
- *   name: Auth
- *   description: Authentication-related endpoints
+ * Belangrijk:
+ * - Vanaf nu worden JWT-tokens alleen in HttpOnly cookies gezet/gelezen.
+ * - De OpenAPI documentatie is hierop aangepast (CookieAuth i.p.v. BearerAuth).
  */
 
 import { Router } from 'express';
@@ -37,7 +27,7 @@ const router = Router();
  * @openapi
  * /auth/register:
  *   post:
- *     summary: Register a new user
+ *     summary: Registreer een nieuwe gebruiker
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -55,11 +45,15 @@ const router = Router();
  *                 type: string
  *               role:
  *                 type: string
+ *                 description: Optioneel, bijvoorbeeld "ADMIN" of "USER"
+ *               personId:
+ *                 type: string
+ *                 description: Indien je al een bestaande Person wilt koppelen
  *     responses:
  *       201:
- *         description: User registered successfully
+ *         description: Gebruiker succesvol geregistreerd
  *       400:
- *         description: Validation error
+ *         description: Validatiefout of ontbrekende velden
  */
 router.post('/register', register);
 
@@ -67,7 +61,7 @@ router.post('/register', register);
  * @openapi
  * /auth/login:
  *   post:
- *     summary: Log in with email and password
+ *     summary: Log in met e-mail en wachtwoord
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -85,10 +79,10 @@ router.post('/register', register);
  *                 type: string
  *               platform:
  *                 type: string
- *                 description: "Possible values: web or mobile"
+ *                 description: "web of mobile"
  *     responses:
  *       200:
- *         description: Login successful; returns user info and JWT tokens
+ *         description: Inloggen gelukt; tokens zijn gezet als HttpOnly cookies. De JSON bevat alleen een gebruiker-object.
  *         content:
  *           application/json:
  *             schema:
@@ -96,6 +90,7 @@ router.post('/register', register);
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: "Login succesvol."
  *                 user:
  *                   type: object
  *                   properties:
@@ -109,17 +104,10 @@ router.post('/register', register);
  *                         type: string
  *                     personId:
  *                       type: string
- *                 tokens:
- *                   type: object
- *                   properties:
- *                     accessToken:
- *                       type: string
- *                     refreshToken:
- *                       type: string
  *       401:
- *         description: Invalid credentials
+ *         description: Foutieve inloggegevens
  *       429:
- *         description: Too many login attempts (rate limit)
+ *         description: Te veel inlogpogingen (rate limit)
  */
 router.post('/login', loginRateLimiter, login);
 
@@ -127,28 +115,35 @@ router.post('/login', loginRateLimiter, login);
  * @openapi
  * /auth/refresh:
  *   post:
- *     summary: Refresh JWT tokens using a refresh token
+ *     summary: Vernieuw de JWT-tokens via de refreshToken (ingelezen uit cookie)
  *     tags: [Auth]
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               refreshToken:
- *                 type: string
  *               platform:
  *                 type: string
+ *                 description: "web of mobile"
  *     responses:
  *       200:
- *         description: Returns new accessToken and refreshToken
+ *         description: Nieuwe tokens gezet in cookies
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Tokens succesvol vernieuwd."
  *       400:
- *         description: Missing refreshToken
+ *         description: Geen refreshToken-cookie aanwezig
  *       401:
- *         description: Invalid or expired refreshToken
+ *         description: Refresh token is ongeldig of verlopen
  *       404:
- *         description: Refresh token not found
+ *         description: Refresh token niet gevonden
  */
 router.post('/refresh', refreshToken);
 
@@ -156,7 +151,7 @@ router.post('/refresh', refreshToken);
  * @openapi
  * /auth/forgot-password:
  *   post:
- *     summary: Request a password reset email
+ *     summary: Vraag een e-mail aan om je wachtwoord te resetten
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -169,11 +164,11 @@ router.post('/refresh', refreshToken);
  *                 type: string
  *     responses:
  *       200:
- *         description: Reset link emailed (if email was valid)
+ *         description: Resetlink verzonden (als email geldig is).
  *       400:
- *         description: Missing email
+ *         description: Ontbrekend e-mailadres
  *       404:
- *         description: No user found with that email
+ *         description: Geen gebruiker gevonden met dit e-mailadres
  */
 router.post('/forgot-password', forgotPassword);
 
@@ -181,7 +176,7 @@ router.post('/forgot-password', forgotPassword);
  * @openapi
  * /auth/reset-password:
  *   post:
- *     summary: Reset the password using a reset token
+ *     summary: Reset het wachtwoord op basis van een reset-token
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -196,11 +191,11 @@ router.post('/forgot-password', forgotPassword);
  *                 type: string
  *     responses:
  *       200:
- *         description: Password reset successful
+ *         description: Wachtwoord succesvol gereset
  *       400:
- *         description: Missing fields or token expired
+ *         description: Ontbrekende velden of token verlopen
  *       404:
- *         description: Invalid reset token
+ *         description: Ongeldig reset-token
  */
 router.post('/reset-password', resetPassword);
 
@@ -208,10 +203,10 @@ router.post('/reset-password', resetPassword);
  * @openapi
  * /auth/change-password:
  *   post:
- *     summary: Change password for the logged-in user
+ *     summary: Verander het wachtwoord van de ingelogde gebruiker (JWT uit cookie)
  *     tags: [Auth]
  *     security:
- *       - BearerAuth: []
+ *       - CookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -225,11 +220,11 @@ router.post('/reset-password', resetPassword);
  *                 type: string
  *     responses:
  *       200:
- *         description: Password changed successfully
+ *         description: Wachtwoord succesvol gewijzigd
  *       400:
- *         description: Missing fields or password too weak
+ *         description: Ontbrekende velden of wachtwoord te zwak
  *       401:
- *         description: Old password incorrect or unauthorized
+ *         description: Oude wachtwoord is onjuist of niet ingelogd
  */
 router.post('/change-password', jwtAuth, changePassword);
 
@@ -237,20 +232,18 @@ router.post('/change-password', jwtAuth, changePassword);
  * @openapi
  * /auth/logout:
  *   post:
- *     summary: Invalidate an existing refresh token
+ *     summary: Invalideer de refresh token (uit cookie) en wis de auth-cookies
  *     tags: [Auth]
- *     requestBody:
- *       required: false
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               refreshToken:
- *                 type: string
  *     responses:
  *       200:
- *         description: Refresh token invalidated (if provided)
+ *         description: Refresh token ongeldig gemaakt, cookies gewist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 router.post('/logout', logout);
 
