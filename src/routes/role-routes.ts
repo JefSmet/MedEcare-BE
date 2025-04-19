@@ -1,13 +1,12 @@
 /**
  * @description
- * Routes voor Role-CRUD, alleen admin.
+ * Routes for Role CRUD, accessible only to admins.
  *
  * @openapi
  * tags:
  *   name: Role
- *   description: Endpoints voor het beheren van rollen
+ *   description: Endpoints for managing roles
  */
-
 import { Router } from 'express';
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
@@ -19,19 +18,21 @@ import {
   deleteRole,
 } from '../controllers/role-controller';
 
+const router = Router();
+
 /**
  * @openapi
  * /admin/roles:
  *   get:
- *     summary: Lijst alle rollen
+ *     summary: List all roles
  *     tags: [Role]
  *     security:
  *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Overzicht van alle rollen
+ *         description: List of all roles
  *   post:
- *     summary: Maak een nieuwe rol aan
+ *     summary: Create a new role
  *     tags: [Role]
  *     security:
  *       - CookieAuth: []
@@ -46,11 +47,11 @@ import {
  *                 type: string
  *     responses:
  *       201:
- *         description: Nieuw aangemaakte rol
+ *         description: Newly created role
  *
  * /admin/roles/{id}:
  *   get:
- *     summary: Haal een rol op
+ *     summary: Retrieve a role
  *     tags: [Role]
  *     security:
  *       - CookieAuth: []
@@ -62,11 +63,11 @@ import {
  *           type: string
  *     responses:
  *       200:
- *         description: De gevraagde rol
+ *         description: The requested role
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   put:
- *     summary: Update een rol
+ *     summary: Update a role
  *     tags: [Role]
  *     security:
  *       - CookieAuth: []
@@ -86,11 +87,11 @@ import {
  *                 type: string
  *     responses:
  *       200:
- *         description: De geüpdatete rol
+ *         description: The updated role
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   delete:
- *     summary: Verwijder een rol
+ *     summary: Delete a role
  *     tags: [Role]
  *     security:
  *       - CookieAuth: []
@@ -102,12 +103,10 @@ import {
  *           type: string
  *     responses:
  *       200:
- *         description: Verwijdering gelukt
+ *         description: Deletion successful
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  */
-const router = Router();
-
 router.get('/', jwtAuth, requireAdmin, listRoles);
 router.post('/', jwtAuth, requireAdmin, createRole);
 router.get('/:id', jwtAuth, requireAdmin, getRoleById);

@@ -1,13 +1,12 @@
 /**
  * @description
- * Routes voor ShiftTypeRate-CRUD, alleen admin.
+ * Routes for ShiftTypeRate CRUD, accessible only to admins.
  *
  * @openapi
  * tags:
  *   name: ShiftTypeRate
- *   description: Endpoints voor het beheren van tarieven per ShiftType
+ *   description: Endpoints for managing ShiftType rates
  */
-
 import { Router } from 'express';
 import {
   createShiftTypeRate,
@@ -19,19 +18,21 @@ import {
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
 
+const router = Router();
+
 /**
  * @openapi
  * /admin/shift-type-rates:
  *   get:
- *     summary: Lijst shift type rates
+ *     summary: List shift type rates
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Array van shift type rates
+ *         description: Array of shift type rates
  *   post:
- *     summary: Maak een nieuw tarief aan
+ *     summary: Create a new rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -54,11 +55,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 format: date-time
  *     responses:
  *       201:
- *         description: Nieuw tarief aangemaakt
+ *         description: New rate created
  *
  * /admin/shift-type-rates/{id}:
  *   get:
- *     summary: Haal een tarief op
+ *     summary: Retrieve a rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -70,11 +71,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: Gevonden tarief
+ *         description: Found rate
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   put:
- *     summary: Update een bestaand tarief
+ *     summary: Update an existing rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -102,11 +103,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 format: date-time
  *     responses:
  *       200:
- *         description: Geüpdatet record
+ *         description: Updated record
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   delete:
- *     summary: Verwijder een tarief
+ *     summary: Delete a rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -118,12 +119,10 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: Verwijdering gelukt
+ *         description: Deletion successful
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  */
-const router = Router();
-
 router.get('/', jwtAuth, requireAdmin, listShiftTypeRates);
 router.post('/', jwtAuth, requireAdmin, createShiftTypeRate);
 router.get('/:id', jwtAuth, requireAdmin, getShiftTypeRateById);

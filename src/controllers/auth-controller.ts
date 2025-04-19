@@ -1,16 +1,16 @@
 /**
  * @description
- * The Auth Controller file handles authentication-related endpoints such as
+ * The Auth Controller handles authentication-related endpoints such as
  * user registration, login, token refresh, password reset, etc.
  *
  * Key changes:
- * - login: plaatst nu accessToken en refreshToken in HttpOnly cookies
- * - refreshToken: leest refreshToken uit cookie, genereert nieuwe token, zet opnieuw in cookie
- * - logout: wist de refreshToken-cookie
+ * - login: now places accessToken and refreshToken in HttpOnly cookies
+ * - refreshToken: reads the refreshToken from cookie, generates new tokens, and sets them again in cookies
+ * - logout: clears the refreshToken cookie
  *
  * @notes
- * - We verwijderen (grotendeels) de tokens uit de JSON-response.
- * - De cookie-instellingen gebruiken { httpOnly: true, secure, sameSite }.
+ * - We remove (mostly) the tokens from the JSON response.
+ * - Cookie settings use { httpOnly: true, secure, sameSite }.
  */
 
 import crypto from 'crypto';
@@ -52,14 +52,14 @@ export async function register(
 
     if (!email || !password) {
       res.status(400).json({
-        error: 'Email en wachtwoord zijn verplichte velden.',
+        error: 'Email and password are required fields.',
       });
       return;
     }
 
     if (!isPasswordValid(password)) {
       res.status(400).json({
-        error: 'Wachtwoord voldoet niet aan het vereiste sterktebeleid.',
+        error: 'Password does not meet the required strength policy.',
       });
       return;
     }
@@ -67,7 +67,7 @@ export async function register(
     const newUser = await createUser({ email, password, role, personId });
 
     res.status(201).json({
-      message: 'Registratie succesvol.',
+      message: 'Registration successful.',
       user: {
         id: newUser.id,
         email: newUser.email,
@@ -100,14 +100,14 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       const { platform = 'web' } = req.body as LoginRequestBody;
       const tokens = generateTokens(user, platform);
 
-      // Sla refresh token op in DB
+      // Store refresh token in DB
       const refreshExpireDays = platform === 'mobile' ? 30 : 7;
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + refreshExpireDays);
 
       await storeRefreshToken(user.id, tokens.refreshToken, expiresAt);
 
-      // Zet tokens in HttpOnly cookies
+      // Set tokens in HttpOnly cookies
       const isProd = process.env.NODE_ENV === 'production';
       res.cookie('accessToken', tokens.accessToken, {
         httpOnly: true,
@@ -120,9 +120,9 @@ export function login(req: Request, res: Response, next: NextFunction): void {
         sameSite: 'strict',
       });
 
-      // Stuur enkel wat basisinfo terug
+      // Return only basic user info
       res.status(200).json({
-        message: 'Login succesvol.',
+        message: 'Login successful.',
         user: {
           id: user.id,
           email: user.email,
@@ -142,10 +142,10 @@ export async function refreshToken(
   next: NextFunction,
 ): Promise<void> {
   try {
-    // Haal de refreshToken uit de HttpOnly cookie
+    // Extract the refreshToken from the HttpOnly cookie
     const refreshToken = req.cookies?.refreshToken;
     if (!refreshToken) {
-      res.status(400).json({ error: 'Geen refreshToken cookie aanwezig.' });
+      res.status(400).json({ error: 'No refreshToken cookie present.' });
       return;
     }
 
@@ -155,7 +155,7 @@ export async function refreshToken(
     try {
       payload = jwt.verify(refreshToken, secret);
     } catch (verifyError) {
-      res.status(401).json({ error: 'Invalid of verlopen refresh token.' });
+      res.status(401).json({ error: 'Invalid or expired refresh token.' });
       return;
     }
 
@@ -163,21 +163,21 @@ export async function refreshToken(
     if (!existingRefresh) {
       res
         .status(404)
-        .json({ error: 'Refresh token niet gevonden of al ongeldig gemaakt.' });
+        .json({ error: 'Refresh token not found or already invalidated.' });
       return;
     }
 
     if (existingRefresh.expiresAt < new Date()) {
       await removeRefreshToken(refreshToken);
-      res.status(401).json({ error: 'Refresh token is verlopen.' });
+      res.status(401).json({ error: 'Refresh token has expired.' });
       return;
     }
 
-    // Oude refresh token wissen in DB (one-time usage)
+    // One-time use: remove old refresh token in DB
     await removeRefreshToken(refreshToken);
 
     const userId = payload.id;
-    const { platform = 'web' } = req.body; // Optioneel als je `platform` wilt blijven doorgeven
+    const { platform = 'web' } = req.body;
     const newTokens = generateTokens({ id: userId } as any, platform);
 
     const refreshExpireDays = platform === 'mobile' ? 30 : 7;
@@ -186,7 +186,7 @@ export async function refreshToken(
 
     await storeRefreshToken(userId, newTokens.refreshToken, newExpiresAt);
 
-    // Zet nieuwe tokens in cookies
+    // Set new tokens in cookies
     const isProd = process.env.NODE_ENV === 'production';
     res.cookie('accessToken', newTokens.accessToken, {
       httpOnly: true,
@@ -200,7 +200,7 @@ export async function refreshToken(
     });
 
     res.status(200).json({
-      message: 'Tokens succesvol vernieuwd.',
+      message: 'Tokens successfully refreshed.',
     });
   } catch (error: any) {
     next(error);
@@ -368,10 +368,10 @@ export async function logout(
   next: NextFunction,
 ): Promise<void> {
   try {
-    // Haal de refreshToken uit de cookie
+    // Extract the refreshToken from the cookie
     const refreshToken = req.cookies?.refreshToken;
 
-    // In alle gevallen clearen we de cookie in de response
+    // In all cases, clear the cookies in the response
     const isProd = process.env.NODE_ENV === 'production';
     res.clearCookie('refreshToken', {
       httpOnly: true,
@@ -385,9 +385,9 @@ export async function logout(
     });
 
     if (!refreshToken) {
-      // Als er geen refreshToken cookie was, is de logout ook in orde
+      // If there was no refreshToken cookie, logout is still successful
       res.status(200).json({
-        message: 'Logout succesvol (geen token aanwezig).',
+        message: 'Logout successful (no token present).',
       });
       return;
     }
@@ -395,13 +395,13 @@ export async function logout(
     try {
       await removeRefreshToken(refreshToken);
       res.status(200).json({
-        message: 'Logout succesvol. Refresh token ongeldig gemaakt.',
+        message: 'Logout successful. Refresh token invalidated.',
       });
     } catch (removeError: any) {
       if (removeError.code === 'P2025') {
-        // Token bestond niet in DB
+        // Token did not exist in DB
         res.status(200).json({
-          message: 'Logout succesvol. Token stond niet (meer) in DB.',
+          message: 'Logout successful. Token was not (or no longer) in the database.',
         });
       } else {
         throw removeError;

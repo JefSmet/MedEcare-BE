@@ -9,7 +9,7 @@
  * - Defines a basic health-check route
  * - Initializes Passport strategies
  * - Mounts auth-related routes under /auth
- * - Mounts admin-related routes and new model routes under /admin
+ * - Mounts admin-related routes and resources under /admin
  */
 
 import express, { Request, Response } from "express";
@@ -52,7 +52,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
-app.use(cookieParser()); // ← HttpOnly cookies correct kunnen parsen
+app.use(cookieParser()); // Parse HttpOnly cookies correctly
 
 // 4. Initialize passport
 app.use(passport.initialize());

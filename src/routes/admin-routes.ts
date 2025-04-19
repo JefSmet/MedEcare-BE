@@ -1,14 +1,13 @@
 /**
  * @description
- * Defineert alle routes voor beheerfuncties die alleen voor 'ADMIN' zijn bedoeld:
- * lijst van gebruikers, aanmaken, updaten, verwijderen.
+ * Defines all admin-only user management routes:
+ * list users, create, update, delete.
  *
  * @openapi
  * tags:
  *   name: Admin
- *   description: Admin endpoints voor user management
+ *   description: Admin endpoints for user management
  */
-
 import { Router } from 'express';
 import {
   createNewUser,
@@ -19,19 +18,21 @@ import {
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
 
+const router = Router();
+
 /**
  * @openapi
  * /admin/users:
  *   get:
- *     summary: Haal alle gebruikers op
+ *     summary: Retrieve all users
  *     tags: [Admin]
  *     security:
  *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Lijst van gebruikers
+ *         description: List of users
  *   post:
- *     summary: Maak een nieuwe gebruiker aan
+ *     summary: Create a new user
  *     tags: [Admin]
  *     security:
  *       - CookieAuth: []
@@ -50,11 +51,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 type: string
  *     responses:
  *       201:
- *         description: Gebruiker succesvol aangemaakt
+ *         description: User successfully created
  *
  * /admin/users/{id}:
  *   put:
- *     summary: Update een bestaande gebruiker
+ *     summary: Update an existing user
  *     tags: [Admin]
  *     security:
  *       - CookieAuth: []
@@ -79,11 +80,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 type: string
  *     responses:
  *       200:
- *         description: Gebruiker geüpdatet
+ *         description: User updated
  *       404:
- *         description: Gebruiker niet gevonden
+ *         description: User not found
  *   delete:
- *     summary: Verwijder een gebruiker
+ *     summary: Delete a user
  *     tags: [Admin]
  *     security:
  *       - CookieAuth: []
@@ -95,12 +96,10 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: Verwijdering voltooid
+ *         description: Deletion completed
  *       404:
- *         description: Gebruiker niet gevonden
+ *         description: User not found
  */
-const router = Router();
-
 router.get('/users', jwtAuth, requireAdmin, listUsers);
 router.post('/users', jwtAuth, requireAdmin, createNewUser);
 router.put('/users/:id', jwtAuth, requireAdmin, updateExistingUser);

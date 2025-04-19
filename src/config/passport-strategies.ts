@@ -14,7 +14,7 @@
  *
  * @notes
  * - The Local Strategy expects `req.body.email` and `req.body.password`.
- * - The JWT Strategy expects a token in an HttpOnly cookie (hier aangepast).
+ * - The JWT Strategy expects a token in an HttpOnly cookie (customized here).
  * - We flatten the userRoles into an array of role names (user.roles = ['ADMIN', 'USER', etc.]).
  */
 
@@ -88,7 +88,7 @@ passport.use(
 /**
  * Cookie Extractor
  * ----------------------------------------------------------------------------
- * Haalt de JWT uit de HttpOnly cookie 'accessToken'.
+ * Extracts the JWT from the HttpOnly cookie 'accessToken'.
  */
 function cookieExtractor(req: Request): string | null {
   if (req && req.cookies && req.cookies.accessToken) {
@@ -100,8 +100,8 @@ function cookieExtractor(req: Request): string | null {
 /**
  * JWT Strategy
  * ----------------------------------------------------------------------------
- * Authenticates requests based on a JWT token in de HttpOnly cookie.
- * Het payload object bevat { id: string } met de user ID.
+ * Authenticates requests based on a JWT token in the HttpOnly cookie.
+ * The payload object contains { id: string } with the user ID.
  */
 const jwtOpts: StrategyOptions = {
   jwtFromRequest: cookieExtractor,

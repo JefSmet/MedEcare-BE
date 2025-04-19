@@ -1,13 +1,12 @@
 /**
  * @description
- * Routes voor Activity CRUD, alleen toegankelijk voor admin.
+ * Routes for Activity CRUD, accessible only to admins.
  *
  * @openapi
  * tags:
  *   name: Activity
- *   description: Endpoints voor activiteiten (shiften/verlof/etc.)
+ *   description: Endpoints for activities (shifts, leave, conferences, etc.)
  */
-
 import { Router } from 'express';
 import {
   createActivity,
@@ -25,15 +24,15 @@ const router = Router();
  * @openapi
  * /admin/activities:
  *   get:
- *     summary: Lijst alle activiteiten
+ *     summary: List all activities
  *     tags: [Activity]
  *     security:
  *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Geeft een lijst van alle activiteiten
+ *         description: Returns a list of all activities
  *   post:
- *     summary: Maak een nieuwe activiteit aan
+ *     summary: Create a new activity
  *     tags: [Activity]
  *     security:
  *       - CookieAuth: []
@@ -58,11 +57,11 @@ const router = Router();
  *                 type: string
  *     responses:
  *       201:
- *         description: De nieuw aangemaakte activiteit
+ *         description: The newly created activity
  *
  * /admin/activities/{id}:
  *   get:
- *     summary: Haal één activiteit op
+ *     summary: Retrieve a single activity
  *     tags: [Activity]
  *     security:
  *       - CookieAuth: []
@@ -74,11 +73,11 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: De opgevraagde activiteit
+ *         description: The requested activity
  *       404:
- *         description: Niet gevonden
+ *         description: Activity not found
  *   put:
- *     summary: Update een bestaande activiteit
+ *     summary: Update an existing activity
  *     tags: [Activity]
  *     security:
  *       - CookieAuth: []
@@ -108,11 +107,11 @@ const router = Router();
  *                 type: string
  *     responses:
  *       200:
- *         description: De geüpdatete activiteit
+ *         description: The updated activity
  *       404:
- *         description: Niet gevonden
+ *         description: Activity not found
  *   delete:
- *     summary: Verwijder een activiteit
+ *     summary: Delete an activity
  *     tags: [Activity]
  *     security:
  *       - CookieAuth: []
@@ -124,9 +123,9 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Succes-bericht
+ *         description: Success message
  *       404:
- *         description: Niet gevonden
+ *         description: Activity not found
  */
 router.get('/', jwtAuth, requireAdmin, listActivities);
 router.post('/', jwtAuth, requireAdmin, createActivity);
