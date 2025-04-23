@@ -1,13 +1,12 @@
 /**
  * @description
- * Routes voor UserConstraint-CRUD, enkel voor admin.
+ * Routes for UserConstraint CRUD, accessible only to admins.
  *
  * @openapi
  * tags:
  *   name: UserConstraint
- *   description: Endpoints voor beheren van constraints per user/person
+ *   description: Endpoints for managing user/person constraints
  */
-
 import { Router } from 'express';
 import {
   createUserConstraint,
@@ -19,19 +18,21 @@ import {
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
 
+const router = Router();
+
 /**
  * @openapi
  * /admin/user-constraints:
  *   get:
- *     summary: Lijst alle user constraints
+ *     summary: List all user constraints
  *     tags: [UserConstraint]
  *     security:
  *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Lijst van user constraints
+ *         description: List of user constraints
  *   post:
- *     summary: Maak een nieuwe user constraint aan
+ *     summary: Create a new user constraint
  *     tags: [UserConstraint]
  *     security:
  *       - CookieAuth: []
@@ -52,11 +53,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 type: number
  *     responses:
  *       201:
- *         description: De nieuw aangemaakte constraint
+ *         description: The newly created constraint
  *
  * /admin/user-constraints/{id}:
  *   get:
- *     summary: Haal een constraint op
+ *     summary: Retrieve a constraint
  *     tags: [UserConstraint]
  *     security:
  *       - CookieAuth: []
@@ -68,11 +69,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: De gevraagde constraint
+ *         description: The requested constraint
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   put:
- *     summary: Update een constraint
+ *     summary: Update a constraint
  *     tags: [UserConstraint]
  *     security:
  *       - CookieAuth: []
@@ -99,11 +100,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 type: number
  *     responses:
  *       200:
- *         description: Geüpdatet
+ *         description: Updated constraint
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   delete:
- *     summary: Verwijder een constraint
+ *     summary: Delete a constraint
  *     tags: [UserConstraint]
  *     security:
  *       - CookieAuth: []
@@ -115,12 +116,10 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: Constraint verwijderd
+ *         description: Constraint deleted
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  */
-const router = Router();
-
 router.get('/', jwtAuth, requireAdmin, listUserConstraints);
 router.post('/', jwtAuth, requireAdmin, createUserConstraint);
 router.get('/:id', jwtAuth, requireAdmin, getUserConstraintById);

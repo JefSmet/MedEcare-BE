@@ -1,16 +1,16 @@
 /**
  * @description
- * The Auth Controller file handles authentication-related endpoints such as
+ * The Auth Controller handles authentication-related endpoints such as
  * user registration, login, token refresh, password reset, etc.
  *
  * Key changes:
- * - login: plaatst nu accessToken en refreshToken in HttpOnly cookies
- * - refreshToken: leest refreshToken uit cookie, genereert nieuwe token, zet opnieuw in cookie
- * - logout: wist de refreshToken-cookie
+ * - login: now places accessToken and refreshToken in HttpOnly cookies
+ * - refreshToken: reads the refreshToken from cookie, generates new tokens, and sets them again in cookies
+ * - logout: clears the refreshToken cookie
  *
  * @notes
- * - We verwijderen (grotendeels) de tokens uit de JSON-response.
- * - De cookie-instellingen gebruiken { httpOnly: true, secure, sameSite }.
+ * - We remove (mostly) the tokens from the JSON response.
+ * - Cookie settings use { httpOnly: true, secure, sameSite }.
  */
 
 import crypto from "crypto";
@@ -52,14 +52,14 @@ export async function register(
 
     if (!email || !password) {
       res.status(400).json({
-        error: "Email en wachtwoord zijn verplichte velden.",
+        error: 'Email and password are required fields.',
       });
       return;
     }
 
     if (!isPasswordValid(password)) {
       res.status(400).json({
-        error: "Wachtwoord voldoet niet aan het vereiste sterktebeleid.",
+        error: 'Password does not meet the required strength policy.',
       });
       return;
     }
@@ -67,7 +67,7 @@ export async function register(
     const newUser = await createUser({ email, password, role, personId });
 
     res.status(201).json({
-      message: "Registratie succesvol.",
+      message: 'Registration successful.',
       user: {
         id: newUser.id,
         email: newUser.email,
@@ -141,7 +141,7 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       res.cookie("accessToken", tokens.accessToken, cookieOptions);
       res.cookie("refreshToken", tokens.refreshToken, cookieOptions);
 
-      // Stuur enkel wat basisinfo terug
+      // Return only basic user info
       res.status(200).json({
         message: "Login succesvol.",
         user: {
@@ -163,7 +163,7 @@ export async function refreshToken(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Haal de refreshToken uit de HttpOnly cookie
+    // Extract the refreshToken from the HttpOnly cookie
     const refreshToken = req.cookies?.refreshToken;
     if (!refreshToken) {
       res.status(400).json({ error: "Geen refreshToken cookie aanwezig." });
@@ -194,7 +194,7 @@ export async function refreshToken(
       return;
     }
 
-    // Oude refresh token wissen in DB (one-time usage)
+    // One-time use: remove old refresh token in DB
     await removeRefreshToken(refreshToken);
 
     const userId = payload.id;
@@ -398,7 +398,7 @@ export async function logout(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Haal de refreshToken uit de cookie
+    // Extract the refreshToken from the cookie
     const refreshToken = req.cookies?.refreshToken;
 
     // In alle gevallen clearen we de cookie in de response
@@ -415,7 +415,7 @@ export async function logout(
     });
 
     if (!refreshToken) {
-      // Als er geen refreshToken cookie was, is de logout ook in orde
+      // If there was no refreshToken cookie, logout is still successful
       res.status(200).json({
         message: "Logout succesvol (geen token aanwezig).",
       });

@@ -1,13 +1,12 @@
 /**
  * @description
- * Routes voor ShiftType-CRUD, enkel admin.
+ * Routes for ShiftType CRUD, accessible only to admins.
  *
  * @openapi
  * tags:
  *   name: ShiftType
- *   description: Endpoints voor het beheren van shift types
+ *   description: Endpoints for managing shift types
  */
-
 import { Router } from 'express';
 import {
   createShiftType,
@@ -19,19 +18,21 @@ import {
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
 
+const router = Router();
+
 /**
  * @openapi
  * /admin/shift-types:
  *   get:
- *     summary: Lijst alle shift types
+ *     summary: List all shift types
  *     tags: [ShiftType]
  *     security:
  *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Array van shift types
+ *         description: Array of shift types
  *   post:
- *     summary: Maak een nieuw ShiftType aan
+ *     summary: Create a new ShiftType
  *     tags: [ShiftType]
  *     security:
  *       - CookieAuth: []
@@ -58,11 +59,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 format: date-time
  *     responses:
  *       201:
- *         description: Nieuw aangemaakt ShiftType
+ *         description: Newly created ShiftType
  *
  * /admin/shift-types/{id}:
  *   get:
- *     summary: Haal ShiftType op
+ *     summary: Retrieve a ShiftType
  *     tags: [ShiftType]
  *     security:
  *       - CookieAuth: []
@@ -74,11 +75,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: Het gevraagde ShiftType
+ *         description: The requested ShiftType
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   put:
- *     summary: Update een ShiftType
+ *     summary: Update a ShiftType
  *     tags: [ShiftType]
  *     security:
  *       - CookieAuth: []
@@ -110,11 +111,11 @@ import { requireAdmin } from '../middleware/role-middleware';
  *                 format: date-time
  *     responses:
  *       200:
- *         description: Geüpdatete ShiftType
+ *         description: Updated ShiftType
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   delete:
- *     summary: Verwijder een ShiftType
+ *     summary: Delete a ShiftType
  *     tags: [ShiftType]
  *     security:
  *       - CookieAuth: []
@@ -126,12 +127,10 @@ import { requireAdmin } from '../middleware/role-middleware';
  *           type: string
  *     responses:
  *       200:
- *         description: Verwijdering voltooid
+ *         description: Deletion completed
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  */
-const router = Router();
-
 router.get('/', jwtAuth, requireAdmin, listShiftTypes);
 router.post('/', jwtAuth, requireAdmin, createShiftType);
 router.get('/:id', jwtAuth, requireAdmin, getShiftTypeById);

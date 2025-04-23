@@ -1,12 +1,12 @@
 /**
  * @description
- * Dit bestand configureert swagger-jsdoc om de OpenAPI-specificatie voor onze app te genereren.
+ * This file configures swagger-jsdoc to generate the OpenAPI specification for our app.
  *
- * Hoofdpunten:
- * - Stelt openapi in op 3.0.0
- * - Definieert API-info (title, version, description)
- * - DECLAREERT nu CookieAuth (i.p.v. BearerAuth) voor JWT via HttpOnly cookies
- * - Exporteert de swaggerSpec die door swagger-ui-express wordt gebruikt
+ * Key points:
+ * - Sets the OpenAPI version to 3.0.0
+ * - Defines API metadata (title, version, description)
+ * - Uses CookieAuth (instead of BearerAuth) for JWT via HttpOnly cookies
+ * - Exports the swaggerSpec for swagger-ui-express
  */
 
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -36,7 +36,7 @@ const options = {
     ],
   },
   apis: [
-    // Aanpassen aan de locaties waar je JSDoc/Swagger in de code bijhoudt
+    // Point to locations of your JSDoc/Swagger comments
     path.join(__dirname, '../routes/*.ts'),
     path.join(__dirname, '../controllers/*.ts'),
   ],

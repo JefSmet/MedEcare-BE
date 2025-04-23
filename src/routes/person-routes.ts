@@ -1,13 +1,12 @@
 /**
  * @description
- * Routes voor Person-CRUD, alleen voor admin.
+ * Routes for Person CRUD, accessible only to admins.
  *
  * @openapi
  * tags:
  *   name: Person
- *   description: CRUD endpoints voor Persons
+ *   description: CRUD endpoints for Persons
  */
-
 import { Router } from 'express';
 import {
   createPerson,
@@ -25,15 +24,15 @@ const router = Router();
  * @openapi
  * /admin/persons:
  *   get:
- *     summary: Lijst alle persons
+ *     summary: List all persons
  *     tags: [Person]
  *     security:
  *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Lijst van personen
+ *         description: List of persons
  *   post:
- *     summary: Maak een nieuwe person aan
+ *     summary: Create a new person
  *     tags: [Person]
  *     security:
  *       - CookieAuth: []
@@ -50,11 +49,11 @@ const router = Router();
  *                 type: string
  *     responses:
  *       201:
- *         description: De nieuw aangemaakte persoon
+ *         description: The newly created person
  *
  * /admin/persons/{id}:
  *   get:
- *     summary: Haal een persoon op
+ *     summary: Retrieve a person
  *     tags: [Person]
  *     security:
  *       - CookieAuth: []
@@ -66,11 +65,11 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: De gevraagde persoon
+ *         description: The requested person
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   put:
- *     summary: Update een persoon
+ *     summary: Update a person
  *     tags: [Person]
  *     security:
  *       - CookieAuth: []
@@ -92,11 +91,11 @@ const router = Router();
  *                 type: string
  *     responses:
  *       200:
- *         description: De geüpdatete persoon
+ *         description: The updated person
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  *   delete:
- *     summary: Verwijder een persoon
+ *     summary: Delete a person
  *     tags: [Person]
  *     security:
  *       - CookieAuth: []
@@ -108,9 +107,9 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Verwijdering is gelukt
+ *         description: Deletion successful
  *       404:
- *         description: Niet gevonden
+ *         description: Not found
  */
 router.get('/', jwtAuth, requireAdmin, listPersons);
 router.post('/', jwtAuth, requireAdmin, createPerson);
