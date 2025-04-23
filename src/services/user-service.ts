@@ -49,6 +49,7 @@ export async function createUser({
         data: {
           firstName: '',
           lastName: '',
+          dateOfBirth: new Date(), // Add the missing required field
         },
       });
       finalPersonId = newPerson.id;

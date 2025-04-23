@@ -65,7 +65,7 @@ export async function createPerson(req: Request, res: Response, next: NextFuncti
       data: {
         firstName: firstName,
         lastName: lastName,
-        dateOfBirth: dateOfBirth,
+        dateOfBirth: dateOfBirth, // Remove default value to allow Prisma to throw error if missing
       },
     });
     res.status(201).json(newPerson);
