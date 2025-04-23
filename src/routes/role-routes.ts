@@ -1,12 +1,3 @@
-/**
- * @description
- * Routes for Role CRUD, accessible only to admins.
- *
- * @openapi
- * tags:
- *   name: Role
- *   description: Endpoints for managing roles
- */
 import { Router } from 'express';
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
@@ -22,6 +13,10 @@ const router = Router();
 
 /**
  * @openapi
+ * tags:
+ *   name: Role
+ *   description: Endpoints for managing roles
+ *
  * /admin/roles:
  *   get:
  *     summary: List all roles

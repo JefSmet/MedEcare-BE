@@ -1,12 +1,3 @@
-/**
- * @description
- * Routes for UserConstraint CRUD, accessible only to admins.
- *
- * @openapi
- * tags:
- *   name: UserConstraint
- *   description: Endpoints for managing user/person constraints
- */
 import { Router } from 'express';
 import {
   createUserConstraint,
@@ -22,6 +13,10 @@ const router = Router();
 
 /**
  * @openapi
+ * tags:
+ *   name: UserConstraint
+ *   description: Endpoints for managing user/person constraints
+ *
  * /admin/user-constraints:
  *   get:
  *     summary: List all user constraints

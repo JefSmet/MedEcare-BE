@@ -1,12 +1,3 @@
-/**
- * @description
- * Routes for Activity CRUD, accessible only to admins.
- *
- * @openapi
- * tags:
- *   name: Activity
- *   description: Endpoints for activities (shifts, leave, conferences, etc.)
- */
 import { Router } from 'express';
 import {
   createActivity,
@@ -22,6 +13,10 @@ const router = Router();
 
 /**
  * @openapi
+ * tags:
+ *   name: Activity
+ *   description: Endpoints for activities (shifts, leave, conferences, etc.)
+ *
  * /admin/activities:
  *   get:
  *     summary: List all activities

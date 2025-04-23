@@ -1,13 +1,3 @@
-/**
- * @description
- * Defines all admin-only user management routes:
- * list users, create, update, delete.
- *
- * @openapi
- * tags:
- *   name: Admin
- *   description: Admin endpoints for user management
- */
 import { Router } from 'express';
 import {
   createNewUser,
@@ -22,6 +12,10 @@ const router = Router();
 
 /**
  * @openapi
+ * tags:
+ *   name: Admin
+ *   description: Admin endpoints for user management
+ *
  * /admin/users:
  *   get:
  *     summary: Retrieve all users
