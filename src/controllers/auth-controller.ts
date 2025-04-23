@@ -17,6 +17,9 @@ import crypto from "crypto";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import passport from "passport";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 import {
   findRefreshToken,
@@ -40,6 +43,9 @@ interface RegisterRequestBody {
   password?: string;
   role?: string;
   personId?: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
 }
 
 export async function register(
@@ -48,26 +54,81 @@ export async function register(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { email, password, role, personId } = req.body as RegisterRequestBody;
+    const {
+      email,
+      password,
+      role,
+      personId,
+      firstName,
+      lastName,
+      dateOfBirth,
+    } = req.body as RegisterRequestBody;
 
     if (!email || !password) {
       res.status(400).json({
-        error: 'Email and password are required fields.',
+        error: "Email and password are required fields.",
       });
       return;
     }
 
     if (!isPasswordValid(password)) {
       res.status(400).json({
-        error: 'Password does not meet the required strength policy.',
+        error: "Password does not meet the required strength policy.",
       });
       return;
     }
 
-    const newUser = await createUser({ email, password, role, personId });
+    // Start a transaction to ensure both person and user are created together
+    let newUser;
+
+    // If personId is provided, use it; otherwise create a new person
+    if (personId) {
+      // Check if the person exists
+      const existingPerson = await prisma.person.findUnique({
+        where: { id: personId },
+      });
+
+      if (!existingPerson) {
+        res.status(400).json({
+          error: "The provided personId does not exist.",
+        });
+        return;
+      }
+
+      newUser = await createUser({ email, password, role, personId });
+    } else {
+      // Create a new person if firstName and lastName are provided
+      if (!firstName || !lastName || !dateOfBirth) {
+        res.status(400).json({
+          error:
+            "First name, last name, and date of birth are required when not providing a personId.",
+        });
+        return;
+      }
+
+      // Create both person and user in a transaction
+      newUser = await prisma.$transaction(async (tx) => {
+        // Create person first
+        const person = await tx.person.create({
+          data: {
+            firstName,
+            lastName,
+            dateOfBirth: dateOfBirth,
+          },
+        });
+
+        // Then create user with the new personId
+        return await createUser({
+          email,
+          password,
+          role,
+          personId: person.id,
+        });
+      });
+    }
 
     res.status(201).json({
-      message: 'Registration successful.',
+      message: "Registration successful.",
       user: {
         id: newUser.id,
         email: newUser.email,
@@ -106,15 +167,15 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       if (platform === "mobile") {
         // Parse REFRESH_TOKEN_EXPIRY_MOBILE uit env (bijv. "30d")
         const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || "30d";
-        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
+        refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 30;
       } else if (platform === "web-persist") {
         // Voor web-persist gebruiken we dezelfde waarde als mobile
         const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || "30d";
-        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
+        refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 30;
       } else {
         // Standaard web
         const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || "7d";
-        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 7;
+        refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 7;
       }
 
       const expiresAt = new Date();
@@ -205,10 +266,10 @@ export async function refreshToken(
     let refreshExpireDays: number;
     if (platform === "mobile") {
       const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || "30d";
-      refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
+      refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 30;
     } else {
       const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || "7d";
-      refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 7;
+      refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 7;
     }
 
     const newExpiresAt = new Date();
