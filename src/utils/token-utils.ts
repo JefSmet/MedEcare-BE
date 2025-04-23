@@ -34,7 +34,7 @@ interface TokenPair {
  * depending on whether the user is on web or mobile.
  *
  * @param {User} user - The user object (from DB) that must contain at least { id: string }
- * @param {string} platform - Either 'web' or 'mobile'. Defaults to 'web' if not provided.
+ * @param {string} platform - Either 'web', 'mobile', or 'web-persist'. Defaults to 'web' if not provided.
  *
  * @returns {TokenPair} An object containing { accessToken, refreshToken }
  *
@@ -52,9 +52,9 @@ export function generateTokens(user: User, platform: string): TokenPair {
     accessExp = process.env.ACCESS_TOKEN_EXPIRY_MOBILE;
     refreshExp = process.env.REFRESH_TOKEN_EXPIRY_MOBILE;
   } else if (platform === "web-persist") {
-    // Voor web-persist (remember me) gebruiken we dezelfde tokens als mobile
-    accessExp = process.env.ACCESS_TOKEN_EXPIRY_WEB; // blijft hetzelfde als web
-    refreshExp = process.env.REFRESH_TOKEN_EXPIRY_MOBILE; // langer bewaren, zoals mobile
+    // For web-persist (remember me), we use the same refresh token configuration as mobile
+    accessExp = process.env.ACCESS_TOKEN_EXPIRY_WEB; // stays the same as web for the access token
+    refreshExp = process.env.REFRESH_TOKEN_EXPIRY_MOBILE; // longer refresh, like mobile
   }
 
   const secret = process.env.JWT_SECRET || "changeme" as Secret; // Fallback for dev/test
