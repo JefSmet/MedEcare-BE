@@ -7,9 +7,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  1. Person & User (1-op-1-relatie), met Roles aan de User
-// ─────────────────────────────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+//  1. Person & User (1-to-1 relationship), with Roles assigned to the User
+////////////////////////////////////////////////////////////////////////////////
 
 model Person {
   id          String   @id @default(uuid())
@@ -19,13 +19,13 @@ model Person {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Elke Person kan precies 0 of 1 user-account hebben
+  // Each Person can have exactly 0 or 1 user account
   user User?
 
-  // Alle activiteiten (shiften, verlof, etc.)
+  // All activities (shifts, leave, etc.)
   activities Activity[]
 
-  // Persoonspecifieke limieten (optioneel)
+  // Person-specific constraints (optional)
   userConstraints UserConstraint[]
 }
 
@@ -33,13 +33,11 @@ model User {
   id       String @id
   email    String @unique
   password String
-  // Als je tijdelijk ook een string-rol wilt:
-  // role    String      @default("USER")
 
-  // Verplichte koppeling naar Person (1:1)
+  // 1-to-1 relationship with Person
   person Person @relation(fields: [id], references: [id])
 
-  // Roles via tussenmodel
+  // Roles via a join table (UserRole)
   userRoles UserRole[]
 
   createdAt DateTime @default(now())
@@ -51,9 +49,9 @@ model User {
   refreshTokens RefreshToken[]
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  2. Rollen (M:N met User)
-// ─────────────────────────────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+//  2. Roles (M:N with User)
+////////////////////////////////////////////////////////////////////////////////
 
 model Role {
   id        String     @id @default(uuid())
@@ -71,9 +69,9 @@ model UserRole {
   @@id([userId, roleId])
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  3. RefreshToken (voor inlog-/passport-flow)
-// ─────────────────────────────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+//  3. RefreshToken (for login/passport-flow)
+////////////////////////////////////////////////////////////////////////////////
 
 model RefreshToken {
   id        String   @id @default(uuid())
@@ -84,27 +82,27 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  4. ShiftType + ShiftTypeRate (tarieven in de tijd)
-// ─────────────────────────────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+//  4. ShiftType + ShiftTypeRate (time-based rates)
+////////////////////////////////////////////////////////////////////////////////
 
 model ShiftType {
   id   String @id @default(uuid())
   name String
 
-  // Optie A: enkel tijd & duur
+  // Option A: only time & duration
   startHour       Int // 0..23
   startMinute     Int // 0..59
-  durationMinutes Int // bv. 720 = 12 uur
+  durationMinutes Int // e.g. 720 = 12 hours
 
-  // Data om de levenscyclus van dit shift-type te beheren
+  // Data to manage the lifecycle of this shift-type
   activeFrom  DateTime?
   activeUntil DateTime?
 
-  // Meerdere tariefperiodes
+  // Multiple rate periods
   rates ShiftTypeRate[]
 
-  // Relatie naar activiteiten
+  // Relation to activities
   activities Activity[]
 
   createdAt DateTime @default(now())
@@ -118,27 +116,27 @@ model ShiftTypeRate {
 
   rate       Float
   validFrom  DateTime
-  validUntil DateTime? // null als er (nog) geen einddatum is
+  validUntil DateTime? // null if no end date yet
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  5. Activity (shiften, verlof, congres, etc.)
-// ─────────────────────────────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+//  5. Activity (shifts, leave, conference, etc.)
+////////////////////////////////////////////////////////////////////////////////
 
 model Activity {
   id           String   @id @default(uuid())
-  activityType String // "SHIFT", "LEAVE", "CONFERENCE", etc.
+  activityType String   // "SHIFT", "LEAVE", "CONFERENCE", etc.
   start        DateTime
   end          DateTime
 
-  // Link naar de persoon (arts/verpleegkundige/etc.)
+  // Relation to the person (doctor/nurse/etc.)
   personId String
   person   Person @relation(fields: [personId], references: [id])
 
-  // Optionele link naar ShiftType (als deze activity een SHIFT is)
+  // Optional link to ShiftType (if this activity is a SHIFT)
   shiftTypeId String?
   shiftType   ShiftType? @relation(fields: [shiftTypeId], references: [id])
 
@@ -146,9 +144,9 @@ model Activity {
   updatedAt DateTime @updatedAt
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  6. (Optioneel) Persoonlijke limieten (UserConstraint)
-// ─────────────────────────────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+//  6. (Optional) Personal constraints (UserConstraint)
+////////////////////////////////////////////////////////////////////////////////
 
 model UserConstraint {
   id       String @id @default(uuid())
