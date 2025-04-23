@@ -45,16 +45,16 @@ interface TokenPair {
  */
 export function generateTokens(user: User, platform: string): TokenPair {
   // Hard-coded expiry times per the technical requirements
-  let accessExp = "1h"; // default for web
-  let refreshExp = "7d"; // default for web
+  let accessExp = process.env.ACCESS_TOKEN_EXPIRY_WEB; // default for web
+  let refreshExp = process.env.REFRESH_TOKEN_EXPIRY_WEB; // default for web
 
   if (platform === "mobile") {
-    accessExp = "24h";
-    refreshExp = "30d";
+    accessExp = process.env.ACCESS_TOKEN_EXPIRY_MOBILE;
+    refreshExp = process.env.REFRESH_TOKEN_EXPIRY_MOBILE;
   } else if (platform === "web-persist") {
     // Voor web-persist (remember me) gebruiken we dezelfde tokens als mobile
-    accessExp = "1h"; // blijft hetzelfde als web
-    refreshExp = "30d"; // langer bewaren, zoals mobile
+    accessExp = process.env.ACCESS_TOKEN_EXPIRY_WEB; // blijft hetzelfde als web
+    refreshExp = process.env.REFRESH_TOKEN_EXPIRY_MOBILE; // langer bewaren, zoals mobile
   }
 
   const secret = process.env.JWT_SECRET || "changeme" as Secret; // Fallback for dev/test

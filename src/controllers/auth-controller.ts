@@ -101,8 +101,22 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       const tokens = generateTokens(user, platform);
 
       // Sla refresh token op in DB
-      const refreshExpireDays =
-        platform === "mobile" ? 30 : platform === "web-persist" ? 30 : 7;
+      // Gebruik env variables voor expiry periodes
+      let refreshExpireDays: number;
+      if (platform === "mobile") {
+        // Parse REFRESH_TOKEN_EXPIRY_MOBILE uit env (bijv. "30d")
+        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || "30d";
+        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
+      } else if (platform === "web-persist") {
+        // Voor web-persist gebruiken we dezelfde waarde als mobile
+        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || "30d";
+        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
+      } else {
+        // Standaard web
+        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || "7d";
+        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 7;
+      }
+
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + refreshExpireDays);
 
@@ -119,7 +133,7 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       // Voor web-persist (remember me), voeg maxAge toe aan de cookies
       // zonder de httpOnly instelling te wijzigen
       if (platform === "web-persist") {
-        const maxAgeDays = 30; // 30 dagen bewaren
+        const maxAgeDays = refreshExpireDays; // Gebruik dezelfde periode als refreshToken
         const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
         Object.assign(cookieOptions, { maxAge: maxAgeMs });
       }
@@ -187,7 +201,16 @@ export async function refreshToken(
     const { platform = "web" } = req.body; // Optioneel als je `platform` wilt blijven doorgeven
     const newTokens = generateTokens({ id: userId } as any, platform);
 
-    const refreshExpireDays = platform === "mobile" ? 30 : 7;
+    // Gebruik env variables voor expiry periodes
+    let refreshExpireDays: number;
+    if (platform === "mobile") {
+      const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || "30d";
+      refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
+    } else {
+      const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || "7d";
+      refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 7;
+    }
+
     const newExpiresAt = new Date();
     newExpiresAt.setDate(newExpiresAt.getDate() + refreshExpireDays);
 
