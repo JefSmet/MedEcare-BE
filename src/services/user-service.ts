@@ -22,8 +22,8 @@
  * - We flatten user roles into user.roles in the passport strategies.
  */
 
-import { PrismaClient, User } from "@prisma/client";
-import bcrypt from "bcrypt";
+import { PrismaClient, User } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -43,7 +43,7 @@ export async function createUser({
   try {
     // Require a personId to be provided
     if (!personId) {
-      throw new Error("A personId must be provided to create a user.");
+      throw new Error('A personId must be provided to create a user.');
     }
 
     // Verify that the person exists
@@ -61,7 +61,7 @@ export async function createUser({
     // Attempt to connect to the role or default to 'USER'
     // We'll look up the role by name. If not found, you can decide to create it or throw an error.
     let connectRoleData = [];
-    let roleName = role || "USER";
+    let roleName = role || 'USER';
 
     const foundRole = await prisma.role.findUnique({
       where: { name: roleName },
@@ -87,7 +87,9 @@ export async function createUser({
       data: {
         email,
         password: hashedPassword,
-        personId: personId,
+        person: {
+          connect: { id: personId },
+        },
         userRoles: {
           create: connectRoleData,
         },
@@ -97,7 +99,7 @@ export async function createUser({
     return newUser;
   } catch (error: any) {
     // Unique constraint violation on email
-    if (error.code === "P2002") {
+    if (error.code === 'P2002') {
       throw new Error(`User with email ${email} already exists.`);
     }
     throw error;
@@ -117,7 +119,7 @@ export async function findByEmail(email: string): Promise<User | null> {
 
 export async function updatePassword(
   userId: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<User> {
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -175,7 +177,7 @@ export async function findAllUsers(): Promise<User[]> {
  */
 export async function updateUser(
   userId: string,
-  data: Partial<User>
+  data: Partial<User>,
 ): Promise<User> {
   try {
     // Password hashing if data.password is present could be done here.

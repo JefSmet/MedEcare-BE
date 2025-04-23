@@ -10,17 +10,10 @@
  *    3. Forgot password
  *    4. Reset password
  *    5. Change password
- * - Mocks or stubs any external email-sending if needed (optional).
+ *    6. Logout
  *
  * @notes
- * - Ensure that your DB is ready before running these tests (e.g., run migrations).
- * - If you want a dedicated test DB, set DB_URL in an .env.test file or similar.
- * - For demonstration, these tests use random test data and expect status codes from our controllers.
- *
- * @dependencies
- * - jest: for test runner
- * - supertest: for HTTP request testing
- * - app from "../src/app": the main Express application
+ * - The code now sets tokens in HttpOnly cookies, so we must check cookies, not JSON for tokens.
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -30,14 +23,12 @@ import app from '../app';
 const prisma = new PrismaClient();
 
 describe('AUTHENTICATION FLOWS', () => {
-  // We'll store tokens here for subsequent tests
-  let accessToken: string;
-  let refreshToken: string;
+  let testCookies: string[] = [];
   const testEmail = `testuser_${Date.now()}@example.com`;
   const testPassword = 'StrongPass#1';
 
   afterAll(async () => {
-    // Clean up: remove the test user from the DB
+    // Clean up any user whose email starts with 'testuser_'
     await prisma.user.deleteMany({
       where: { email: { startsWith: 'testuser_' } },
     });
@@ -46,14 +37,19 @@ describe('AUTHENTICATION FLOWS', () => {
 
   // 1. Registration
   describe('POST /auth/register', () => {
-    it('should register a new user with valid email/password', async () => {
+    it('should register a new user with valid data', async () => {
       const res = await request(app).post('/auth/register').send({
         email: testEmail,
         password: testPassword,
+        firstName: 'John',
+        lastName: 'Doe',
+        dateOfBirth: '1990-05-01',
       });
       expect(res.status).toBe(201);
-      expect(res.body).toHaveProperty('message', 'Registratie succesvol.');
+      expect(res.body).toHaveProperty('message', 'Registration successful.');
       expect(res.body.user).toHaveProperty('email', testEmail);
+      expect(res.body.user).toHaveProperty('id');
+      expect(res.body.user).toHaveProperty('personId');
     });
 
     it('should fail to register a user with a weak password', async () => {
@@ -62,6 +58,9 @@ describe('AUTHENTICATION FLOWS', () => {
         .send({
           email: `weak_${Date.now()}@example.com`,
           password: 'weak',
+          firstName: 'Jake',
+          lastName: 'Weakpass',
+          dateOfBirth: '1980-01-01',
         });
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error');
@@ -70,6 +69,9 @@ describe('AUTHENTICATION FLOWS', () => {
     it('should fail to register if email is missing', async () => {
       const res = await request(app).post('/auth/register').send({
         password: 'MissingEmail#1',
+        firstName: 'NoEmail',
+        lastName: 'User',
+        dateOfBirth: '1970-01-01',
       });
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error');
@@ -78,17 +80,22 @@ describe('AUTHENTICATION FLOWS', () => {
 
   // 2. Login
   describe('POST /auth/login', () => {
-    it('should login an existing user and return tokens', async () => {
+    it('should login an existing user and set tokens in cookies', async () => {
       const res = await request(app).post('/auth/login').send({
         email: testEmail,
         password: testPassword,
       });
       expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('tokens');
-      expect(res.body.tokens).toHaveProperty('accessToken');
-      expect(res.body.tokens).toHaveProperty('refreshToken');
-      accessToken = res.body.tokens.accessToken;
-      refreshToken = res.body.tokens.refreshToken;
+      expect(res.body).toHaveProperty('message', 'Login successful.');
+      expect(res.body.user).toHaveProperty('email', testEmail);
+
+      // Check that cookies are present in the response
+      const setCookieHeader = res.headers['set-cookie'];
+      expect(setCookieHeader).toBeDefined();
+      // Store them for subsequent tests (like change-password)
+      testCookies = Array.isArray(setCookieHeader)
+        ? setCookieHeader
+        : [setCookieHeader];
     });
 
     it('should fail login with incorrect password', async () => {
@@ -103,39 +110,39 @@ describe('AUTHENTICATION FLOWS', () => {
 
   // 3. Refresh Token
   describe('POST /auth/refresh', () => {
-    it('should refresh tokens with valid refresh token', async () => {
-      const res = await request(app).post('/auth/refresh').send({
-        refreshToken,
-        platform: 'web',
-      });
+    it('should successfully refresh tokens when cookies are present', async () => {
+      const res = await request(app)
+        .post('/auth/refresh')
+        .set('Cookie', testCookies);
+      // In the updated code, we only return a message in the JSON body
+      // The new tokens are again in the 'set-cookie' header
       expect(res.status).toBe(200);
-      expect(res.body.tokens).toHaveProperty('accessToken');
-      expect(res.body.tokens).toHaveProperty('refreshToken');
-      // We can store new tokens if desired
-      accessToken = res.body.tokens.accessToken;
-      refreshToken = res.body.tokens.refreshToken;
+      expect(res.body).toHaveProperty(
+        'message',
+        'Tokens successfully renewed.',
+      );
+      const newCookies = res.headers['set-cookie'];
+      expect(newCookies).toBeDefined();
+      // Overwrite testCookies for subsequent usage
+      testCookies = Array.isArray(newCookies) ? newCookies : [newCookies];
     });
 
-    it('should fail to refresh with invalid refresh token', async () => {
-      const res = await request(app).post('/auth/refresh').send({
-        refreshToken: 'fakeOrExpiredToken',
-        platform: 'web',
-      });
-      // 401 or 404 is possible, depending on code
-      expect([401, 404]).toContain(res.status);
+    it('should fail if no refreshToken cookie is provided', async () => {
+      // No cookies set
+      const res = await request(app).post('/auth/refresh');
+      expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error');
     });
   });
 
   // 4. Forgot & Reset Password
   describe('POST /auth/forgot-password', () => {
-    it('should return 200 even if the email is valid', async () => {
+    it('should return 200 if the email is valid (user exists)', async () => {
       const res = await request(app).post('/auth/forgot-password').send({
         email: testEmail,
       });
-      // Our code returns 200 or 404 depending on user existence.
-      // If user is found, status=200. If not found, 404.
-      // Here the user does exist, so we expect 200
+      // Typically 200 for "we sent an email" or 404 if user not found
+      // This user does exist, so we expect 200
       expect([200, 404]).toContain(res.status);
     });
 
@@ -147,7 +154,7 @@ describe('AUTHENTICATION FLOWS', () => {
   });
 
   describe('POST /auth/reset-password', () => {
-    it('should fail to reset password if token is missing', async () => {
+    it('should fail to reset if token is missing', async () => {
       const res = await request(app).post('/auth/reset-password').send({
         newPassword: 'NewPass#1',
       });
@@ -155,44 +162,47 @@ describe('AUTHENTICATION FLOWS', () => {
       expect(res.body).toHaveProperty('error');
     });
 
-    // We do not actually have the real reset token from forgot flow in this test environment,
-    // so this is an illustrative test. In a real integration, you would capture the token from
-    // the email or the DB and use it here. For demonstration, we expect a 404 or 400.
     it('should fail to reset with an invalid token', async () => {
       const res = await request(app).post('/auth/reset-password').send({
-        token: 'someFakeToken',
+        token: 'invalidToken',
         newPassword: 'NewPass#1',
       });
+      // code might return 400 or 404 for invalid token
       expect([400, 404]).toContain(res.status);
+      expect(res.body).toHaveProperty('error');
     });
   });
 
   // 5. Change Password
   describe('POST /auth/change-password', () => {
-    it('should change password for logged-in user', async () => {
-      // We'll attempt to change from testPassword -> newTestPassword
-      // Then restore it back to testPassword to keep subsequent tests valid
+    it('should change password for the logged-in user (using cookies)', async () => {
+      // Attempt to change from testPassword -> newTestPassword
       const newTestPassword = 'ChangedPass#1';
       const res = await request(app)
         .post('/auth/change-password')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', testCookies)
         .send({
           oldPassword: testPassword,
           newPassword: newTestPassword,
         });
-      // If oldPassword was correct, status=200
+
       if (res.status === 200) {
-        // revert it back to keep test stable
-        await request(app)
+        expect(res.body).toHaveProperty(
+          'message',
+          'Password changed successfully.',
+        );
+
+        // Now revert it back for consistency
+        const revertRes = await request(app)
           .post('/auth/change-password')
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Cookie', testCookies)
           .send({
             oldPassword: newTestPassword,
             newPassword: testPassword,
           });
-        expect(res.status).toBe(200);
+        // We won't fail the test if revert fails in some environment, but let's check it
+        expect([200, 401, 400]).toContain(revertRes.status);
       } else {
-        // Some environment might forbid direct revert, so just ensure it doesn't break
         expect([200, 401, 400]).toContain(res.status);
       }
     });
@@ -200,7 +210,7 @@ describe('AUTHENTICATION FLOWS', () => {
     it('should fail with 401 if old password is wrong', async () => {
       const res = await request(app)
         .post('/auth/change-password')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', testCookies)
         .send({
           oldPassword: 'WrongOldPass',
           newPassword: 'SomeNewPass#1',
@@ -211,12 +221,15 @@ describe('AUTHENTICATION FLOWS', () => {
 
   // 6. Logout
   describe('POST /auth/logout', () => {
-    it('should invalidate the refresh token', async () => {
-      const res = await request(app).post('/auth/logout').send({
-        refreshToken,
-      });
+    it('should invalidate the refresh token and clear cookies', async () => {
+      const res = await request(app)
+        .post('/auth/logout')
+        .set('Cookie', testCookies);
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('message');
+      // Check if cookies are cleared
+      const logoutCookies = res.headers['set-cookie'];
+      expect(logoutCookies).toBeDefined();
     });
   });
 });

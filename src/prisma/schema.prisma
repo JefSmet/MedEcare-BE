@@ -12,40 +12,38 @@ generator client {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Person {
-  id         String         @id @default(uuid())
-  firstName  String
-  lastName   String
+  id          String   @id @default(uuid())
+  firstName   String
+  lastName    String
   dateOfBirth DateTime
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Elke Person kan precies 0 of 1 user-account hebben
-  user       User?
+  user User?
 
   // Alle activiteiten (shiften, verlof, etc.)
-  activities  Activity[]
+  activities Activity[]
 
   // Persoonspecifieke limieten (optioneel)
   userConstraints UserConstraint[]
 }
 
 model User {
-  id         String      @id @default(uuid())
-  email      String      @unique
-  password   String
+  id       String @id
+  email    String @unique
+  password String
   // Als je tijdelijk ook een string-rol wilt:
   // role    String      @default("USER")
 
   // Verplichte koppeling naar Person (1:1)
-  personId   String
-  person     Person      @relation(fields: [personId], references: [id])
-  @@unique([personId])   // Zorgt dat geen twee Users naar dezelfde Person verwijzen
+  person Person @relation(fields: [id], references: [id])
 
   // Roles via tussenmodel
-  userRoles  UserRole[]
+  userRoles UserRole[]
 
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   resetToken  String?
   resetExpire DateTime?
@@ -58,8 +56,8 @@ model User {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Role {
-  id       String     @id @default(uuid())
-  name     String     @unique
+  id        String     @id @default(uuid())
+  name      String     @unique
   userRoles UserRole[]
 }
 
@@ -91,39 +89,39 @@ model RefreshToken {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model ShiftType {
-  id              String         @id @default(uuid())
-  name            String
+  id   String @id @default(uuid())
+  name String
 
   // Optie A: enkel tijd & duur
-  startHour       Int            // 0..23
-  startMinute     Int            // 0..59
-  durationMinutes Int            // bv. 720 = 12 uur
+  startHour       Int // 0..23
+  startMinute     Int // 0..59
+  durationMinutes Int // bv. 720 = 12 uur
 
   // Data om de levenscyclus van dit shift-type te beheren
-  activeFrom      DateTime?
-  activeUntil     DateTime?
+  activeFrom  DateTime?
+  activeUntil DateTime?
 
   // Meerdere tariefperiodes
-  rates           ShiftTypeRate[]
+  rates ShiftTypeRate[]
 
   // Relatie naar activiteiten
-  activities      Activity[]
+  activities Activity[]
 
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ShiftTypeRate {
-  id          String     @id @default(uuid())
+  id          String    @id @default(uuid())
   shiftTypeId String
-  shiftType   ShiftType  @relation(fields: [shiftTypeId], references: [id])
+  shiftType   ShiftType @relation(fields: [shiftTypeId], references: [id])
 
-  rate        Float
-  validFrom   DateTime
-  validUntil  DateTime?  // null als er (nog) geen einddatum is
+  rate       Float
+  validFrom  DateTime
+  validUntil DateTime? // null als er (nog) geen einddatum is
 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,21 +129,21 @@ model ShiftTypeRate {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Activity {
-  id                String     @id @default(uuid())
-  activityType      String     // "SHIFT", "LEAVE", "CONFERENCE", etc.
-  start             DateTime
-  end               DateTime
+  id           String   @id @default(uuid())
+  activityType String // "SHIFT", "LEAVE", "CONFERENCE", etc.
+  start        DateTime
+  end          DateTime
 
   // Link naar de persoon (arts/verpleegkundige/etc.)
-  personId          String
-  person            Person     @relation(fields: [personId], references: [id])
+  personId String
+  person   Person @relation(fields: [personId], references: [id])
 
   // Optionele link naar ShiftType (als deze activity een SHIFT is)
-  shiftTypeId       String?
-  shiftType         ShiftType? @relation(fields: [shiftTypeId], references: [id])
+  shiftTypeId String?
+  shiftType   ShiftType? @relation(fields: [shiftTypeId], references: [id])
 
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -153,15 +151,15 @@ model Activity {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model UserConstraint {
-  id                          String  @id @default(uuid())
-  personId                    String
-  person                      Person  @relation(fields: [personId], references: [id])
+  id       String @id @default(uuid())
+  personId String
+  person   Person @relation(fields: [personId], references: [id])
 
-  maxNightShiftsPerWeek       Int?
-  maxConsecutiveNightShifts   Int?
-  minRestHoursBetweenShifts   Int?
+  maxNightShiftsPerWeek     Int?
+  maxConsecutiveNightShifts Int?
+  minRestHoursBetweenShifts Int?
   // etc.
 
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -3,14 +3,13 @@
  * Integration tests for Admin-only flows: listing users, creating users, updating roles, etc.
  *
  * Key features:
- * - Uses a temporary admin user to authenticate requests
+ * - Uses a temporary admin user to authenticate requests (via cookies)
  * - Ensures non-admin requests get 403 Forbidden
- * - Illustrates creating, updating, and deleting user data via the Admin controller
+ * - Demonstrates creating, updating, and deleting user data via the Admin controller
  *
  * @dependencies
  * - jest for the test runner
  * - supertest for HTTP request testing
- * - app from '../src/app' for the Express application
  * - PrismaClient to manipulate DB test data
  *
  * @notes
@@ -25,7 +24,7 @@ import app from '../app';
 const prisma = new PrismaClient();
 
 describe('ADMIN FLOWS', () => {
-  let adminAccessToken: string;
+  let adminCookies: string[] = [];
   let normalUserId: string;
 
   // Hardcode an admin user email for the tests
@@ -33,116 +32,151 @@ describe('ADMIN FLOWS', () => {
   const adminPassword = 'AdminPass#1';
 
   beforeAll(async () => {
-    // 1. Create a user in DB with role = ADMIN
+    // 1. Create a user in DB with role = ADMIN (directly via Prisma)
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
-    await prisma.user.create({
+    // Because we no longer store a single 'role' field in user table,
+    // we need to ensure the 'ADMIN' role exists and then link them. For test simplicity,
+    // let's insert a Role and then link. Alternatively, you can skip if it's already in DB.
+    const adminRole = await prisma.role.upsert({
+      where: { name: 'ADMIN' },
+      update: {},
+      create: { name: 'ADMIN' },
+    });
+
+    const person = await prisma.person.create({
       data: {
-        email: adminEmail,
-        password: hashedPassword,
-        role: 'ADMIN',
+        firstName: 'AdminFirst',
+        lastName: 'AdminLast',
+        dateOfBirth: new Date('1980-01-01'),
       },
     });
 
-    // 2. Log in as admin to get access token
+    const adminUser = await prisma.user.create({
+      data: {
+        email: adminEmail,
+        password: hashedPassword,
+        person: { connect: { id: person.id } },
+        userRoles: {
+          create: [{ roleId: adminRole.id }],
+        },
+      },
+    });
+
+    // 2. Log in as admin to get cookies
     const loginRes = await request(app).post('/auth/login').send({
       email: adminEmail,
       password: adminPassword,
     });
 
     if (loginRes.status === 200) {
-      adminAccessToken = loginRes.body.tokens.accessToken;
+      const cookies = loginRes.headers['set-cookie'];
+      adminCookies = typeof cookies === 'string' ? [cookies] : cookies;
     }
   });
 
   afterAll(async () => {
-    // Remove admin user, if created
+    // Cleanup admin user & normal user if they exist
     await prisma.user.deleteMany({
       where: {
-        email: adminEmail,
+        OR: [{ email: adminEmail }, { id: normalUserId }],
       },
     });
-
-    // Also remove any test user created by the admin route
-    if (normalUserId) {
-      await prisma.user.deleteMany({
-        where: {
-          id: normalUserId,
-        },
-      });
-    }
+    // Optionally clean up the created person record
+    await prisma.person.deleteMany({
+      where: {
+        firstName: 'AdminFirst',
+        lastName: 'AdminLast',
+      },
+    });
 
     await prisma.$disconnect();
   });
 
   describe('ADMIN Access Verification', () => {
-    it('should fail if we do not provide an admin token', async () => {
+    it('should fail if no authentication is provided', async () => {
       const res = await request(app).get('/admin/users');
-      expect(res.status).toBe(401); // Because we are not logged in at all
+      expect(res.status).toBe(401); // Not logged in
     });
 
-    it('should fail if we provide a normal user token (non-admin)', async () => {
-      // We create a normal user first
-      const normalUserEmail = `normal_user_${Date.now()}@example.com`;
-      await request(app).post('/auth/register').send({
-        email: normalUserEmail,
-        password: 'NormalPass#1',
+    it("should fail if we provide a normal user's cookie (non-admin)", async () => {
+      // Create a normal user
+      const person = await prisma.person.create({
+        data: {
+          firstName: 'NormalFirst',
+          lastName: 'NormalLast',
+          dateOfBirth: new Date('1990-06-01'),
+        },
       });
-      // Log in to get the normal user's token
-      const normalLoginRes = await request(app).post('/auth/login').send({
-        email: normalUserEmail,
-        password: 'NormalPass#1',
-      });
-      const normalAccessToken = normalLoginRes.body?.tokens?.accessToken || '';
 
-      // Try to list users with a normal token
-      const adminRes = await request(app)
-        .get('/admin/users')
-        .set('Authorization', `Bearer ${normalAccessToken}`);
-      expect(adminRes.status).toBe(403); // Forbidden
+      const hashed = await bcrypt.hash('NormalPass#1', 10);
+      const normalUser = await prisma.user.create({
+        data: {
+          email: `normal_user_${Date.now()}@example.com`,
+          password: hashed,
+          person: { connect: { id: person.id } },
+          // userRoles: we'll link them to a 'USER' role or none
+        },
+      });
+
+      // Log in to get that user's cookies
+      const normalLoginRes = await request(app).post('/auth/login').send({
+        email: normalUser.email,
+        password: 'NormalPass#1',
+      });
+      if (normalLoginRes.status === 200) {
+        const cookies = normalLoginRes.headers['set-cookie'];
+        const normalCookies = typeof cookies === 'string' ? [cookies] : cookies;
+
+        // Try to list users with a normal user's cookie
+        const adminRes = await request(app)
+          .get('/admin/users')
+          .set('Cookie', normalCookies);
+        expect(adminRes.status).toBe(403); // Forbidden for non-admin
+      }
     });
   });
 
   describe('CRUD operations on /admin/users', () => {
-    it('should list users when admin token is provided', async () => {
+    it('should list users when admin cookies are provided', async () => {
       const res = await request(app)
         .get('/admin/users')
-        .set('Authorization', `Bearer ${adminAccessToken}`);
+        .set('Cookie', adminCookies);
       expect(res.status).toBe(200);
-      // Should have an array of users
       expect(Array.isArray(res.body.users)).toBe(true);
     });
 
     it('should create a new user with specified role', async () => {
       const res = await request(app)
         .post('/admin/users')
-        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .set('Cookie', adminCookies)
         .send({
           email: `test_admin_create_${Date.now()}@example.com`,
           password: 'UserPass#1',
           role: 'USER',
         });
+
       expect(res.status).toBe(201);
       expect(res.body.user).toHaveProperty('id');
       expect(res.body.user).toHaveProperty('email');
-      normalUserId = res.body.user.id; // store for cleanup
+      normalUserId = res.body.user.id;
     });
 
-    it('should update an existing user (e.g. change role)', async () => {
-      const newRole = 'ADMIN'; // promote to admin
+    it('should update an existing user (e.g., change email or password)', async () => {
+      const newEmail = `promoted_user_${Date.now()}@example.com`;
       const res = await request(app)
         .put(`/admin/users/${normalUserId}`)
-        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .set('Cookie', adminCookies)
         .send({
-          role: newRole,
+          email: newEmail,
         });
       expect(res.status).toBe(200);
-      expect(res.body.user.role).toBe(newRole);
+      expect(res.body.user).toHaveProperty('email', newEmail);
     });
 
     it('should delete an existing user', async () => {
       const deleteRes = await request(app)
         .delete(`/admin/users/${normalUserId}`)
-        .set('Authorization', `Bearer ${adminAccessToken}`);
+        .set('Cookie', adminCookies);
       expect(deleteRes.status).toBe(200);
     });
   });

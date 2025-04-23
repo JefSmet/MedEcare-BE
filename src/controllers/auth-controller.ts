@@ -4,20 +4,20 @@
  * user registration, login, token refresh, password reset, etc.
  *
  * Key changes:
- * - login: now places accessToken and refreshToken in HttpOnly cookies
- * - refreshToken: reads the refreshToken from cookie, generates new tokens, and sets them again in cookies
- * - logout: clears the refreshToken cookie
+ * - login: sets accessToken and refreshToken in HttpOnly cookies
+ * - refreshToken: reads the refreshToken from the cookie, generates new tokens, and sets them again as cookies
+ * - logout: clears the refreshToken and accessToken cookies
  *
  * @notes
- * - We remove (mostly) the tokens from the JSON response.
- * - Cookie settings use { httpOnly: true, secure, sameSite }.
+ * - The JSON response generally contains a 'message' and optionally user info, but not the tokens themselves.
+ * - Tokens are stored in the cookies for better security.
  */
 
-import crypto from "crypto";
-import { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import passport from "passport";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
+import { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import passport from 'passport';
 
 const prisma = new PrismaClient();
 
@@ -26,17 +26,17 @@ import {
   removeRefreshToken,
   storeRefreshToken,
   storeResetToken,
-} from "../services/auth-service";
-import { sendResetEmail } from "../services/email-service";
+} from '../services/auth-service';
+import { sendResetEmail } from '../services/email-service';
 import {
   createUser,
   findByEmail,
+  findById,
   findByResetToken,
   updatePassword,
-  findById,
-} from "../services/user-service";
-import { isPasswordValid } from "../utils/password-validator";
-import { generateTokens } from "../utils/token-utils";
+} from '../services/user-service';
+import { isPasswordValid } from '../utils/password-validator';
+import { generateTokens } from '../utils/token-utils';
 
 interface RegisterRequestBody {
   email?: string;
@@ -50,7 +50,7 @@ interface RegisterRequestBody {
 export async function register(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   try {
     const { email, password, role, firstName, lastName, dateOfBirth } =
@@ -58,22 +58,21 @@ export async function register(
 
     if (!email || !password) {
       res.status(400).json({
-        error: "Email and password are required fields.",
+        error: 'Email and password are required fields.',
+      });
+      return;
+    }
+
+    if (!firstName || !lastName || !dateOfBirth) {
+      res.status(400).json({
+        error: 'First name, last name, and date of birth are required fields.',
       });
       return;
     }
 
     if (!isPasswordValid(password)) {
       res.status(400).json({
-        error: "Password does not meet the required strength policy.",
-      });
-      return;
-    }
-
-    // Check if firstName, lastName, and dateOfBirth are provided
-    if (!firstName || !lastName || !dateOfBirth) {
-      res.status(400).json({
-        error: "First name, last name, and date of birth are required fields.",
+        error: 'Password does not meet the required strength policy.',
       });
       return;
     }
@@ -82,14 +81,14 @@ export async function register(
     const parsedDate = new Date(dateOfBirth);
     if (isNaN(parsedDate.getTime())) {
       res.status(400).json({
-        error: "Date of birth must be a valid date format (YYYY-MM-DD).",
+        error: 'Date of birth must be a valid date format (YYYY-MM-DD).',
       });
       return;
     }
 
-    // Create user, first checking if person exists
+    // Create user, ensuring a Person record exists or is created
     const newUser = await prisma.$transaction(async (tx) => {
-      // First check if a person with same name and DOB already exists
+      // Check if a person with the same name and DOB already exists
       const existingPerson = await tx.person.findFirst({
         where: {
           firstName,
@@ -98,13 +97,11 @@ export async function register(
         },
       });
 
-      let personId;
+      let personId: string;
 
       if (existingPerson) {
-        // Use existing person's ID
         personId = existingPerson.id;
       } else {
-        // Create new person if none exists
         const newPerson = await tx.person.create({
           data: {
             firstName,
@@ -125,11 +122,11 @@ export async function register(
     });
 
     res.status(201).json({
-      message: "Registration successful.",
+      message: 'Registration successful.',
       user: {
         id: newUser.id,
         email: newUser.email,
-        personId: newUser.personId,
+        personId: newUser.id,
       },
     });
   } catch (error: any) {
@@ -140,39 +137,35 @@ export async function register(
 interface LoginRequestBody {
   email?: string;
   password?: string;
-  platform?: "web" | "mobile" | "web-persist";
+  platform?: 'web' | 'mobile' | 'web-persist';
 }
 
 export function login(req: Request, res: Response, next: NextFunction): void {
-  passport.authenticate("local", async (err: any, user: any, info: any) => {
+  passport.authenticate('local', async (err: any, user: any, info: any) => {
     if (err) {
       next(err);
       return;
     }
     if (!user) {
-      res.status(401).json({ error: info?.message || "Invalid credentials." });
+      res.status(401).json({ error: info?.message || 'Invalid credentials.' });
       return;
     }
 
     try {
-      const { platform = "web" } = req.body as LoginRequestBody;
+      const { platform = 'web' } = req.body as LoginRequestBody;
       const tokens = generateTokens(user, platform);
 
-      // Sla refresh token op in DB
-      // Gebruik env variables voor expiry periodes
+      // Decide the refresh token expiry in days based on platform
       let refreshExpireDays: number;
-      if (platform === "mobile") {
-        // Parse REFRESH_TOKEN_EXPIRY_MOBILE uit env (bijv. "30d")
-        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || "30d";
-        refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 30;
-      } else if (platform === "web-persist") {
-        // Voor web-persist gebruiken we dezelfde waarde als mobile
-        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || "30d";
-        refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 30;
+      if (platform === 'mobile') {
+        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || '30d';
+        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
+      } else if (platform === 'web-persist') {
+        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || '30d';
+        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
       } else {
-        // Standaard web
-        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || "7d";
-        refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 7;
+        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || '7d';
+        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 7;
       }
 
       const expiresAt = new Date();
@@ -180,28 +173,24 @@ export function login(req: Request, res: Response, next: NextFunction): void {
 
       await storeRefreshToken(user.id, tokens.refreshToken, expiresAt);
 
-      // Zet tokens in HttpOnly cookies
-      const isProd = process.env.NODE_ENV === "production";
+      const isProd = process.env.NODE_ENV === 'production';
       const cookieOptions = {
-        httpOnly: true, // This ensures cookies remain HttpOnly
+        httpOnly: true,
         secure: isProd,
-        sameSite: "strict" as "strict",
+        sameSite: 'strict' as const,
       };
 
-      // Voor web-persist (remember me), voeg maxAge toe aan de cookies
-      // zonder de httpOnly instelling te wijzigen
-      if (platform === "web-persist") {
-        const maxAgeDays = refreshExpireDays; // Gebruik dezelfde periode als refreshToken
-        const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+      // For "web-persist", set a maxAge so the cookies remain after browser close
+      if (platform === 'web-persist') {
+        const maxAgeMs = refreshExpireDays * 24 * 60 * 60 * 1000;
         Object.assign(cookieOptions, { maxAge: maxAgeMs });
       }
 
-      res.cookie("accessToken", tokens.accessToken, cookieOptions);
-      res.cookie("refreshToken", tokens.refreshToken, cookieOptions);
+      res.cookie('accessToken', tokens.accessToken, cookieOptions);
+      res.cookie('refreshToken', tokens.refreshToken, cookieOptions);
 
-      // Return only basic user info
       res.status(200).json({
-        message: "Login succesvol.",
+        message: 'Login successful.',
         user: {
           id: user.id,
           email: user.email,
@@ -218,23 +207,22 @@ export function login(req: Request, res: Response, next: NextFunction): void {
 export async function refreshToken(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   try {
-    // Extract the refreshToken from the HttpOnly cookie
     const refreshToken = req.cookies?.refreshToken;
     if (!refreshToken) {
-      res.status(400).json({ error: "Geen refreshToken cookie aanwezig." });
+      res.status(400).json({ error: 'No refreshToken cookie present.' });
       return;
     }
 
-    const secret = process.env.JWT_SECRET || "changeme";
+    const secret = process.env.JWT_SECRET || 'changeme';
     let payload: any;
 
     try {
       payload = jwt.verify(refreshToken, secret);
     } catch (verifyError) {
-      res.status(401).json({ error: "Invalid of verlopen refresh token." });
+      res.status(401).json({ error: 'Invalid or expired refresh token.' });
       return;
     }
 
@@ -242,13 +230,13 @@ export async function refreshToken(
     if (!existingRefresh) {
       res
         .status(404)
-        .json({ error: "Refresh token niet gevonden of al ongeldig gemaakt." });
+        .json({ error: 'Refresh token not found or already invalidated.' });
       return;
     }
 
     if (existingRefresh.expiresAt < new Date()) {
       await removeRefreshToken(refreshToken);
-      res.status(401).json({ error: "Refresh token is verlopen." });
+      res.status(401).json({ error: 'Refresh token is expired.' });
       return;
     }
 
@@ -256,19 +244,19 @@ export async function refreshToken(
     await removeRefreshToken(refreshToken);
 
     const userId = payload.id;
-    const { platform = "web" } = req.body as {
-      platform?: "web" | "mobile" | "web-persist";
-    }; // Verwacht een JSON object met platform property
+    const { platform = 'web' } = req.body as {
+      platform?: 'web' | 'mobile' | 'web-persist';
+    };
     const newTokens = generateTokens({ id: userId } as any, platform);
 
-    // Gebruik env variables voor expiry periodes
+    // Decide refresh token expiry in days for new token
     let refreshExpireDays: number;
-    if (platform === "mobile") {
-      const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || "30d";
-      refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 30;
+    if (platform === 'mobile') {
+      const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || '30d';
+      refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
     } else {
-      const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || "7d";
-      refreshExpireDays = parseInt(envExpiry.replace("d", ""), 10) || 7;
+      const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || '7d';
+      refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 7;
     }
 
     const newExpiresAt = new Date();
@@ -276,21 +264,20 @@ export async function refreshToken(
 
     await storeRefreshToken(userId, newTokens.refreshToken, newExpiresAt);
 
-    // Zet nieuwe tokens in cookies
-    const isProd = process.env.NODE_ENV === "production";
-    res.cookie("accessToken", newTokens.accessToken, {
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('accessToken', newTokens.accessToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
-    res.cookie("refreshToken", newTokens.refreshToken, {
+    res.cookie('refreshToken', newTokens.refreshToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     res.status(200).json({
-      message: "Tokens succesvol vernieuwd.",
+      message: 'Tokens successfully renewed.',
     });
   } catch (error: any) {
     next(error);
@@ -304,14 +291,14 @@ interface ForgotPasswordRequestBody {
 export async function forgotPassword(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   try {
     const { email } = req.body as ForgotPasswordRequestBody;
     if (!email) {
       res
         .status(400)
-        .json({ error: "Email is required to request password reset." });
+        .json({ error: 'Email is required to request a password reset.' });
       return;
     }
 
@@ -319,11 +306,11 @@ export async function forgotPassword(
     if (!user) {
       res
         .status(404)
-        .json({ error: "No user found with the given email address." });
+        .json({ error: 'No user found with the given email address.' });
       return;
     }
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1);
 
@@ -334,7 +321,7 @@ export async function forgotPassword(
 
     res.status(200).json({
       message:
-        "Reset instructions sent to the provided email address (if valid).",
+        'Reset instructions have been sent to the provided email address (if valid).',
     });
   } catch (error: any) {
     next(error);
@@ -349,7 +336,7 @@ interface ResetPasswordRequestBody {
 export async function resetPassword(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   try {
     const { token, newPassword } = req.body as ResetPasswordRequestBody;
@@ -364,29 +351,29 @@ export async function resetPassword(
 
     const user = await findByResetToken(token);
     if (!user) {
-      res.status(404).json({ error: "Invalid or unknown reset token." });
+      res.status(404).json({ error: 'Invalid or unknown reset token.' });
       return;
     }
 
     if (!user.resetExpire || user.resetExpire < new Date()) {
       res.status(400).json({
-        error: "This reset token has expired. Please request a new one.",
+        error: 'This reset token has expired. Please request a new one.',
       });
       return;
     }
 
     if (!isPasswordValid(newPassword)) {
       res.status(400).json({
-        error: "New password does not meet the required strength policy.",
+        error: 'New password does not meet the required strength policy.',
       });
       return;
     }
 
     await updatePassword(user.id, newPassword);
-    await storeResetToken(user.id, "", new Date(0));
+    await storeResetToken(user.id, '', new Date(0));
 
     res.status(200).json({
-      message: "Password has been reset successfully. You can now log in.",
+      message: 'Password has been reset successfully. You can now log in.',
     });
   } catch (error: any) {
     next(error);
@@ -401,12 +388,12 @@ interface ChangePasswordRequestBody {
 export async function changePassword(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   try {
     const userFromJwt = req.user as { id: string } | undefined;
     if (!userFromJwt || !userFromJwt.id) {
-      res.status(401).json({ error: "Unauthorized or invalid token." });
+      res.status(401).json({ error: 'Unauthorized or invalid token.' });
       return;
     }
 
@@ -420,64 +407,57 @@ export async function changePassword(
 
     const dbUser = await findById(userFromJwt.id);
     if (!dbUser) {
-      res.status(404).json({ error: "User not found." });
+      res.status(404).json({ error: 'User not found.' });
       return;
     }
 
-    const bcrypt = require("bcrypt");
+    const bcrypt = require('bcrypt');
     const isMatch = await bcrypt.compare(oldPassword, dbUser.password);
     if (!isMatch) {
-      res.status(401).json({ error: "Old password is incorrect." });
+      res.status(401).json({ error: 'Old password is incorrect.' });
       return;
     }
 
     if (!isPasswordValid(newPassword)) {
       res
         .status(400)
-        .json({ error: "New password does not meet strength requirements." });
+        .json({ error: 'New password does not meet strength requirements.' });
       return;
     }
 
     await updatePassword(dbUser.id, newPassword);
 
     res.status(200).json({
-      message: "Password changed successfully.",
+      message: 'Password changed successfully.',
     });
   } catch (error: any) {
     next(error);
   }
 }
 
-interface LogoutRequestBody {
-  refreshToken?: string;
-}
-
 export async function logout(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   try {
-    // Extract the refreshToken from the cookie
     const refreshToken = req.cookies?.refreshToken;
 
-    // In alle gevallen clearen we de cookie in de response
-    const isProd = process.env.NODE_ENV === "production";
-    res.clearCookie("refreshToken", {
+    const isProd = process.env.NODE_ENV === 'production';
+    res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
-    res.clearCookie("accessToken", {
+    res.clearCookie('accessToken', {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     if (!refreshToken) {
-      // If there was no refreshToken cookie, logout is still successful
       res.status(200).json({
-        message: "Logout succesvol (geen token aanwezig).",
+        message: 'Logout successful (no token present).',
       });
       return;
     }
@@ -485,13 +465,13 @@ export async function logout(
     try {
       await removeRefreshToken(refreshToken);
       res.status(200).json({
-        message: "Logout succesvol. Refresh token ongeldig gemaakt.",
+        message: 'Logout successful. Refresh token invalidated.',
       });
     } catch (removeError: any) {
-      if (removeError.code === "P2025") {
-        // Token bestond niet in DB
+      if (removeError.code === 'P2025') {
+        // Token did not exist in DB
         res.status(200).json({
-          message: "Logout succesvol. Token stond niet (meer) in DB.",
+          message: 'Logout successful. Token was not found in the DB.',
         });
       } else {
         throw removeError;

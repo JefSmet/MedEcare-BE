@@ -32,6 +32,9 @@ const router = Router();
  *             required:
  *               - email
  *               - password
+ *               - firstName
+ *               - lastName
+ *               - dateOfBirth
  *             properties:
  *               email:
  *                 type: string
@@ -40,9 +43,13 @@ const router = Router();
  *               role:
  *                 type: string
  *                 description: Optional, e.g. "ADMIN" or "USER"
- *               personId:
+ *               firstName:
  *                 type: string
- *                 description: If you want to link to an existing Person
+ *               lastName:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
  *     responses:
  *       201:
  *         description: User successfully registered
@@ -69,10 +76,10 @@ const router = Router();
  *                 type: string
  *               platform:
  *                 type: string
- *                 description: "web or mobile"
+ *                 description: "web, mobile, or web-persist"
  *     responses:
  *       200:
- *         description: Login successful; tokens are set as HttpOnly cookies. The JSON contains only a user object.
+ *         description: Login successful; tokens are set as HttpOnly cookies. The JSON contains only a user object plus a message.
  *         content:
  *           application/json:
  *             schema:
@@ -112,14 +119,14 @@ const router = Router();
  *             properties:
  *               platform:
  *                 type: string
- *                 description: "web or mobile"
+ *                 description: "web, mobile, or web-persist"
  *     responses:
  *       200:
  *         description: New tokens set in cookies
  *       400:
  *         description: No refreshToken cookie present
  *       401:
- *         description: Refresh token is invalid or expired
+ *         description: Refresh token invalid or expired
  *       404:
  *         description: Refresh token not found
  *
@@ -138,7 +145,7 @@ const router = Router();
  *                 type: string
  *     responses:
  *       200:
- *         description: Reset instructions sent (if the email is valid)
+ *         description: Reset instructions sent (if email is valid)
  *       400:
  *         description: Missing email address
  *       404:
@@ -169,7 +176,7 @@ const router = Router();
  *
  * /auth/change-password:
  *   post:
- *     summary: Change the password of the logged-in user (JWT from cookie)
+ *     summary: Change the password of the logged-in user (JWT read from cookie)
  *     tags: [Auth]
  *     security:
  *       - CookieAuth: []
@@ -188,9 +195,9 @@ const router = Router();
  *       200:
  *         description: Password successfully changed
  *       400:
- *         description: Missing fields or password too weak
+ *         description: Missing fields or weak password
  *       401:
- *         description: Old password is incorrect or not authenticated
+ *         description: Old password incorrect or not authenticated
  *
  * /auth/logout:
  *   post:
@@ -198,7 +205,7 @@ const router = Router();
  *     tags: [Auth]
  *     responses:
  *       200:
- *         description: Refresh token invalidated, cookies cleared.
+ *         description: Refresh token invalidated, cookies cleared
  */
 router.post('/register', register);
 router.post('/login', loginRateLimiter, login);
