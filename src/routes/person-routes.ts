@@ -1,12 +1,3 @@
-/**
- * @description
- * Routes for Person CRUD, accessible only to admins.
- *
- * @openapi
- * tags:
- *   name: Person
- *   description: CRUD endpoints for Persons
- */
 import { Router } from 'express';
 import {
   createPerson,
@@ -22,6 +13,10 @@ const router = Router();
 
 /**
  * @openapi
+ * tags:
+ *   name: Person
+ *   description: CRUD endpoints for Persons
+ *
  * /admin/persons:
  *   get:
  *     summary: List all persons

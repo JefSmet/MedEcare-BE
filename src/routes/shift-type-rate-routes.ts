@@ -1,12 +1,3 @@
-/**
- * @description
- * Routes for ShiftTypeRate CRUD, accessible only to admins.
- *
- * @openapi
- * tags:
- *   name: ShiftTypeRate
- *   description: Endpoints for managing ShiftType rates
- */
 import { Router } from 'express';
 import {
   createShiftTypeRate,
@@ -22,6 +13,10 @@ const router = Router();
 
 /**
  * @openapi
+ * tags:
+ *   name: ShiftTypeRate
+ *   description: Endpoints for managing ShiftType rates
+ *
  * /admin/shift-type-rates:
  *   get:
  *     summary: List shift type rates

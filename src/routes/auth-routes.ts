@@ -1,13 +1,3 @@
-/**
- * @description
- * The Auth Routes define all endpoints related to authentication:
- * /register, /login, /refresh, /forgot-password, /reset-password, /change-password, /logout
- *
- * Note:
- * - From now on, JWT tokens are only set/read in HttpOnly cookies.
- * - The OpenAPI documentation has been updated accordingly (CookieAuth instead of BearerAuth).
- */
-
 import { Router } from 'express';
 import {
   forgotPassword,
@@ -25,6 +15,10 @@ const router = Router();
 
 /**
  * @openapi
+ * tags:
+ *   name: Auth
+ *   description: Authentication endpoints (register, login, refresh, etc.)
+ *
  * /auth/register:
  *   post:
  *     summary: Register a new user
@@ -54,11 +48,7 @@ const router = Router();
  *         description: User successfully registered
  *       400:
  *         description: Validation error or missing fields
- */
-router.post('/register', register);
-
-/**
- * @openapi
+ *
  * /auth/login:
  *   post:
  *     summary: Log in with email and password
@@ -108,11 +98,7 @@ router.post('/register', register);
  *         description: Invalid credentials
  *       429:
  *         description: Too many login attempts (rate limit)
- */
-router.post('/login', loginRateLimiter, login);
-
-/**
- * @openapi
+ *
  * /auth/refresh:
  *   post:
  *     summary: Refresh the JWT tokens via the refreshToken (read from cookie)
@@ -130,25 +116,13 @@ router.post('/login', loginRateLimiter, login);
  *     responses:
  *       200:
  *         description: New tokens set in cookies
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Tokens successfully refreshed."
  *       400:
  *         description: No refreshToken cookie present
  *       401:
  *         description: Refresh token is invalid or expired
  *       404:
  *         description: Refresh token not found
- */
-router.post('/refresh', refreshToken);
-
-/**
- * @openapi
+ *
  * /auth/forgot-password:
  *   post:
  *     summary: Request an email to reset your password
@@ -169,11 +143,7 @@ router.post('/refresh', refreshToken);
  *         description: Missing email address
  *       404:
  *         description: No user found with this email address
- */
-router.post('/forgot-password', forgotPassword);
-
-/**
- * @openapi
+ *
  * /auth/reset-password:
  *   post:
  *     summary: Reset the password using a reset token
@@ -196,11 +166,7 @@ router.post('/forgot-password', forgotPassword);
  *         description: Missing fields or token expired
  *       404:
  *         description: Invalid reset token
- */
-router.post('/reset-password', resetPassword);
-
-/**
- * @openapi
+ *
  * /auth/change-password:
  *   post:
  *     summary: Change the password of the logged-in user (JWT from cookie)
@@ -225,11 +191,7 @@ router.post('/reset-password', resetPassword);
  *         description: Missing fields or password too weak
  *       401:
  *         description: Old password is incorrect or not authenticated
- */
-router.post('/change-password', jwtAuth, changePassword);
-
-/**
- * @openapi
+ *
  * /auth/logout:
  *   post:
  *     summary: Invalidate the refresh token (from cookie) and clear the auth cookies
@@ -237,14 +199,13 @@ router.post('/change-password', jwtAuth, changePassword);
  *     responses:
  *       200:
  *         description: Refresh token invalidated, cookies cleared.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
  */
+router.post('/register', register);
+router.post('/login', loginRateLimiter, login);
+router.post('/refresh', refreshToken);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
+router.post('/change-password', jwtAuth, changePassword);
 router.post('/logout', logout);
 
 export default router;

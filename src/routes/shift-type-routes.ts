@@ -1,12 +1,3 @@
-/**
- * @description
- * Routes for ShiftType CRUD, accessible only to admins.
- *
- * @openapi
- * tags:
- *   name: ShiftType
- *   description: Endpoints for managing shift types
- */
 import { Router } from 'express';
 import {
   createShiftType,
@@ -22,6 +13,10 @@ const router = Router();
 
 /**
  * @openapi
+ * tags:
+ *   name: ShiftType
+ *   description: Endpoints for managing shift types
+ *
  * /admin/shift-types:
  *   get:
  *     summary: List all shift types
