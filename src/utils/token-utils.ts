@@ -20,8 +20,8 @@
  * - In future steps, we may store refresh tokens in the database for revocation or blacklisting.
  */
 
-import { User } from '@prisma/client';
-import jwt from 'jsonwebtoken';
+import { User } from "@prisma/client";
+import jwt, { Secret, SignOptions } from "jsonwebtoken";
 
 interface TokenPair {
   accessToken: string;
@@ -45,10 +45,19 @@ interface TokenPair {
  */
 export function generateTokens(user: User, platform: string): TokenPair {
   // Hard-coded expiry times per the technical requirements
-  const accessExp = platform === 'mobile' ? '24h' : '1h'; // 1h for web, 24h for mobile
-  const refreshExp = platform === 'mobile' ? '30d' : '7d'; // 7d for web, 30d for mobile
+  let accessExp = "1h"; // default for web
+  let refreshExp = "7d"; // default for web
 
-  const secret = process.env.JWT_SECRET || 'changeme'; // Fallback for dev/test
+  if (platform === "mobile") {
+    accessExp = "24h";
+    refreshExp = "30d";
+  } else if (platform === "web-persist") {
+    // Voor web-persist (remember me) gebruiken we dezelfde tokens als mobile
+    accessExp = "1h"; // blijft hetzelfde als web
+    refreshExp = "30d"; // langer bewaren, zoals mobile
+  }
+
+  const secret = process.env.JWT_SECRET || "changeme" as Secret; // Fallback for dev/test
 
   // Payload includes only the user ID, per best practice
   const payload = { id: user.id };
@@ -56,12 +65,12 @@ export function generateTokens(user: User, platform: string): TokenPair {
   // Generate Access Token
   const accessToken = jwt.sign(payload, secret, {
     expiresIn: accessExp,
-  });
+  } as SignOptions);
 
   // Generate Refresh Token
   const refreshToken = jwt.sign(payload, secret, {
     expiresIn: refreshExp,
-  });
+  } as SignOptions);
 
   return {
     accessToken,
