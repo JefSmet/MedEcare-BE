@@ -60,11 +60,12 @@ export async function getPersonById(req: Request, res: Response, next: NextFunct
 
 export async function createPerson(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { firstName, lastName } = req.body;
+    const { firstName, lastName, dateOfBirth } = req.body;
     const newPerson = await prisma.person.create({
       data: {
-        firstName: firstName ?? '',
-        lastName: lastName ?? '',
+        firstName: firstName,
+        lastName: lastName,
+        dateOfBirth: dateOfBirth,
       },
     });
     res.status(201).json(newPerson);
