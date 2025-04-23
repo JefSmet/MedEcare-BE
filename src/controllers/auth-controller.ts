@@ -42,7 +42,6 @@ interface RegisterRequestBody {
   email?: string;
   password?: string;
   role?: string;
-  personId?: string;
   firstName?: string;
   lastName?: string;
   dateOfBirth?: string;
@@ -54,15 +53,8 @@ export async function register(
   next: NextFunction
 ): Promise<void> {
   try {
-    const {
-      email,
-      password,
-      role,
-      personId,
-      firstName,
-      lastName,
-      dateOfBirth,
-    } = req.body as RegisterRequestBody;
+    const { email, password, role, firstName, lastName, dateOfBirth } =
+      req.body as RegisterRequestBody;
 
     if (!email || !password) {
       res.status(400).json({
@@ -78,54 +70,59 @@ export async function register(
       return;
     }
 
-    // Start a transaction to ensure both person and user are created together
-    let newUser;
+    // Check if firstName, lastName, and dateOfBirth are provided
+    if (!firstName || !lastName || !dateOfBirth) {
+      res.status(400).json({
+        error: "First name, last name, and date of birth are required fields.",
+      });
+      return;
+    }
 
-    // If personId is provided, use it; otherwise create a new person
-    if (personId) {
-      // Check if the person exists
-      const existingPerson = await prisma.person.findUnique({
-        where: { id: personId },
+    // Validate that dateOfBirth is a valid date
+    const parsedDate = new Date(dateOfBirth);
+    if (isNaN(parsedDate.getTime())) {
+      res.status(400).json({
+        error: "Date of birth must be a valid date format (YYYY-MM-DD).",
+      });
+      return;
+    }
+
+    // Create user, first checking if person exists
+    const newUser = await prisma.$transaction(async (tx) => {
+      // First check if a person with same name and DOB already exists
+      const existingPerson = await tx.person.findFirst({
+        where: {
+          firstName,
+          lastName,
+          dateOfBirth: parsedDate,
+        },
       });
 
-      if (!existingPerson) {
-        res.status(400).json({
-          error: "The provided personId does not exist.",
-        });
-        return;
-      }
+      let personId;
 
-      newUser = await createUser({ email, password, role, personId });
-    } else {
-      // Create a new person if firstName and lastName are provided
-      if (!firstName || !lastName || !dateOfBirth) {
-        res.status(400).json({
-          error:
-            "First name, last name, and date of birth are required when not providing a personId.",
-        });
-        return;
-      }
-
-      // Create both person and user in a transaction
-      newUser = await prisma.$transaction(async (tx) => {
-        // Create person first
-        const person = await tx.person.create({
+      if (existingPerson) {
+        // Use existing person's ID
+        personId = existingPerson.id;
+      } else {
+        // Create new person if none exists
+        const newPerson = await tx.person.create({
           data: {
             firstName,
             lastName,
-            dateOfBirth: dateOfBirth,
+            dateOfBirth: parsedDate,
           },
         });
+        personId = newPerson.id;
+      }
 
-        // Then create user with the new personId
-        return await createUser({
-          email,
-          password,
-          role,
-          personId: person.id,
-        });
+      // Create user with the personId
+      return await createUser({
+        email,
+        password,
+        role,
+        personId,
       });
-    }
+    });
 
     res.status(201).json({
       message: "Registration successful.",
@@ -259,7 +256,9 @@ export async function refreshToken(
     await removeRefreshToken(refreshToken);
 
     const userId = payload.id;
-    const { platform = "web" } = req.body; // Optioneel als je `platform` wilt blijven doorgeven
+    const { platform = "web" } = req.body as {
+      platform?: "web" | "mobile" | "web-persist";
+    }; // Verwacht een JSON object met platform property
     const newTokens = generateTokens({ id: userId } as any, platform);
 
     // Gebruik env variables voor expiry periodes

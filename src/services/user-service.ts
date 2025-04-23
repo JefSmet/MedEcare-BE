@@ -22,15 +22,15 @@
  * - We flatten user roles into user.roles in the passport strategies.
  */
 
-import { PrismaClient, User } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import { PrismaClient, User } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 interface CreateUserParams {
   email: string;
   password: string;
-  role?: string;  // e.g. 'ADMIN' or 'USER'
+  role?: string; // e.g. 'ADMIN' or 'USER'
   personId?: string; // If the Person record is pre-created, pass it here
 }
 
@@ -41,18 +41,18 @@ export async function createUser({
   personId,
 }: CreateUserParams): Promise<User> {
   try {
-    // We must have a personId or create a new Person
-    let finalPersonId = personId;
-    if (!finalPersonId) {
-      // Create a minimal Person record
-      const newPerson = await prisma.person.create({
-        data: {
-          firstName: '',
-          lastName: '',
-          dateOfBirth: new Date(), // Add the missing required field
-        },
-      });
-      finalPersonId = newPerson.id;
+    // Require a personId to be provided
+    if (!personId) {
+      throw new Error("A personId must be provided to create a user.");
+    }
+
+    // Verify that the person exists
+    const existingPerson = await prisma.person.findUnique({
+      where: { id: personId },
+    });
+
+    if (!existingPerson) {
+      throw new Error(`Person with ID ${personId} not found.`);
     }
 
     // Hash the password
@@ -61,14 +61,14 @@ export async function createUser({
     // Attempt to connect to the role or default to 'USER'
     // We'll look up the role by name. If not found, you can decide to create it or throw an error.
     let connectRoleData = [];
-    let roleName = role || 'USER';
+    let roleName = role || "USER";
 
     const foundRole = await prisma.role.findUnique({
       where: { name: roleName },
     });
 
     if (!foundRole) {
-      // You can decide to create the role or throw an error. 
+      // You can decide to create the role or throw an error.
       // For demonstration, let's throw an error:
       throw new Error(`Role "${roleName}" not found in the database.`);
       // Alternatively, you could do:
@@ -87,7 +87,7 @@ export async function createUser({
       data: {
         email,
         password: hashedPassword,
-        personId: finalPersonId,
+        personId: personId,
         userRoles: {
           create: connectRoleData,
         },
@@ -97,7 +97,7 @@ export async function createUser({
     return newUser;
   } catch (error: any) {
     // Unique constraint violation on email
-    if (error.code === 'P2002') {
+    if (error.code === "P2002") {
       throw new Error(`User with email ${email} already exists.`);
     }
     throw error;
@@ -117,7 +117,7 @@ export async function findByEmail(email: string): Promise<User | null> {
 
 export async function updatePassword(
   userId: string,
-  newPassword: string,
+  newPassword: string
 ): Promise<User> {
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -169,13 +169,13 @@ export async function findAllUsers(): Promise<User[]> {
 
 /**
  * @function updateUser
- * @description Updates a user's fields. 
- * Because roles are stored in a separate table (UserRole), 
+ * @description Updates a user's fields.
+ * Because roles are stored in a separate table (UserRole),
  * we won't handle them here unless you specifically want to remove or add roles.
  */
 export async function updateUser(
   userId: string,
-  data: Partial<User>,
+  data: Partial<User>
 ): Promise<User> {
   try {
     // Password hashing if data.password is present could be done here.
@@ -209,4 +209,3 @@ export async function deleteUser(userId: string): Promise<User> {
     throw error;
   }
 }
-

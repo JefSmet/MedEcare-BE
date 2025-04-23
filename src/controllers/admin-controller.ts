@@ -94,7 +94,7 @@ export async function createNewUser(
     }
 
     // Uses createUser from user-service
-    const newUser = await createUser({ email, password, role });
+    const newUser = await createUser({ email, password, role});
 
     res.status(201).json({
       message: 'User created successfully by Admin.',
