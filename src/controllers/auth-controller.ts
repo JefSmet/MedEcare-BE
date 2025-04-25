@@ -86,39 +86,36 @@ export async function register(
       return;
     }
 
-    // Create user, ensuring a Person record exists or is created
-    const newUser = await prisma.$transaction(async (tx) => {
-      // Check if a person with the same name and DOB already exists
-      const existingPerson = await tx.person.findFirst({
-        where: {
+    // Check if a person with the same name and DOB already exists
+    const existingPerson = await prisma.person.findFirst({
+      where: {
+        firstName,
+        lastName,
+        dateOfBirth: parsedDate,
+      },
+    });
+
+    let personId: string;
+
+    if (existingPerson) {
+      personId = existingPerson.id;
+    } else {
+      const newPerson = await prisma.person.create({
+        data: {
           firstName,
           lastName,
           dateOfBirth: parsedDate,
         },
       });
+      personId = newPerson.id;
+    }
 
-      let personId: string;
-
-      if (existingPerson) {
-        personId = existingPerson.id;
-      } else {
-        const newPerson = await tx.person.create({
-          data: {
-            firstName,
-            lastName,
-            dateOfBirth: parsedDate,
-          },
-        });
-        personId = newPerson.id;
-      }
-
-      // Create user with the personId
-      return await createUser({
-        email,
-        password,
-        role,
-        personId,
-      });
+    // Create user with the personId
+    const newUser = await createUser({
+      email,
+      password,
+      role,
+      personId,
     });
 
     res.status(201).json({
