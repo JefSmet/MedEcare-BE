@@ -25,7 +25,6 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import {
   Strategy as JwtStrategy,
   StrategyOptions,
-  ExtractJwt,
   VerifiedCallback,
 } from 'passport-jwt';
 import { Request } from 'express';
@@ -112,7 +111,7 @@ passport.use(
   new JwtStrategy(jwtOpts, async (payload: any, done: VerifiedCallback) => {
     try {
       const user = (await prisma.user.findUnique({
-        where: { id: payload.id },
+        where: { personId: payload.id }, // Changed here: was { id: payload.id }
         include: {
           userRoles: {
             include: {

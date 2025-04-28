@@ -121,9 +121,8 @@ export async function register(
     res.status(201).json({
       message: 'Registration successful.',
       user: {
-        id: newUser.id,
+        personID: newUser.personId,
         email: newUser.email,
-        personId: newUser.id,
       },
     });
   } catch (error: any) {
@@ -168,7 +167,8 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + refreshExpireDays);
 
-      await storeRefreshToken(user.id, tokens.refreshToken, expiresAt);
+      // Changed: user.id => user.personID
+      await storeRefreshToken(user.personID, tokens.refreshToken, expiresAt);
 
       const isProd = process.env.NODE_ENV === 'production';
       const cookieOptions = {
@@ -189,10 +189,11 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       res.status(200).json({
         message: 'Login successful.',
         user: {
-          id: user.id,
+          personID: user.personID,
           email: user.email,
           roles: user.roles,
-          personId: user.personId,
+          // Renamed the property from user.personId to user.personID for consistency
+          personId: user.personID,
         },
       });
     } catch (tokenError) {
@@ -244,7 +245,7 @@ export async function refreshToken(
     const { platform = 'web' } = req.body as {
       platform?: 'web' | 'mobile' | 'web-persist';
     };
-    const newTokens = generateTokens({ id: userId } as any, platform);
+    const newTokens = generateTokens({ personID: userId } as any, platform);
 
     // Decide refresh token expiry in days for new token
     let refreshExpireDays: number;
@@ -311,7 +312,7 @@ export async function forgotPassword(
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1);
 
-    await storeResetToken(user.id, resetToken, expiresAt);
+    await storeResetToken(user.personId, resetToken, expiresAt);
 
     const resetLink = `https://your-frontend-app.com/reset-password?token=${resetToken}`;
     await sendResetEmail(user.email, resetLink);
@@ -366,8 +367,8 @@ export async function resetPassword(
       return;
     }
 
-    await updatePassword(user.id, newPassword);
-    await storeResetToken(user.id, '', new Date(0));
+    await updatePassword(user.personId, newPassword);
+    await storeResetToken(user.personId, '', new Date(0));
 
     res.status(200).json({
       message: 'Password has been reset successfully. You can now log in.',
@@ -388,8 +389,9 @@ export async function changePassword(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const userFromJwt = req.user as { id: string } | undefined;
-    if (!userFromJwt || !userFromJwt.id) {
+    // Adjusted to read personID from req.user
+    const userFromJwt = req.user as { personID: string } | undefined;
+    if (!userFromJwt || !userFromJwt.personID) {
       res.status(401).json({ error: 'Unauthorized or invalid token.' });
       return;
     }
@@ -402,7 +404,7 @@ export async function changePassword(
       return;
     }
 
-    const dbUser = await findById(userFromJwt.id);
+    const dbUser = await findById(userFromJwt.personID);
     if (!dbUser) {
       res.status(404).json({ error: 'User not found.' });
       return;
@@ -422,7 +424,7 @@ export async function changePassword(
       return;
     }
 
-    await updatePassword(dbUser.id, newPassword);
+    await updatePassword(dbUser.personId, newPassword);
 
     res.status(200).json({
       message: 'Password changed successfully.',

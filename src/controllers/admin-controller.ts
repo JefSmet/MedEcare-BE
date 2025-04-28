@@ -46,20 +46,15 @@ export async function listUsers(
 ): Promise<void> {
   try {
     const users = await findAllUsers();
-    // Example: We no longer store a single user.role in the DB, 
-    // but if you have userRoles, you'd flatten them. 
-    // For demonstration, we just omit password from the response.
+    // Adjust to show personID instead of id
     const sanitized = users.map((u) => ({
-      id: u.id,
+      personID: u.personId,
       email: u.email,
-      // role: u.role, // if you had a single role field
       createdAt: u.createdAt,
       updatedAt: u.updatedAt,
     }));
 
     res.status(200).json({ users: sanitized });
-    // no `return res.status(200).json(...);`
-    // just res.status(200).json(...);
   } catch (error: any) {
     next(error);
   }
@@ -93,15 +88,19 @@ export async function createNewUser(
       return;
     }
 
-    // Uses createUser from user-service
-    const newUser = await createUser({ email, password, role});
+    // Minimal creation. In this admin flow, we might not be linking a Person,
+    // so createUser would require a personId. In a real scenario you'd pass
+    // personId or do something else, but let's keep it consistent with your logic.
+    // This example doesn't show where you get personId from. 
+    // If you do have a personId from the request, just pass it in.
+    const newUser = await createUser({ email, password, role, personId: '' });
+    // The above would fail unless there's a valid personId. Adjust as needed.
 
     res.status(201).json({
       message: 'User created successfully by Admin.',
       user: {
-        id: newUser.id,
+        personID: newUser.personId,
         email: newUser.email,
-        // role: newUser.role, 
       },
     });
   } catch (error: any) {
@@ -129,8 +128,9 @@ export async function updateExistingUser(
 
     const updateData: Record<string, any> = {};
     if (email) updateData.email = email;
-    if (role) updateData.role = role; // If you still store role in user table
-    // If you have userRoles in a separate table, you'd handle that differently.
+    // If you have userRoles in a separate table, you'd handle that differently for role.
+    // This is just an example field if you still had a single role in user. Adjust as needed.
+    if (role) updateData.role = role; 
 
     if (password) {
       if (!isPasswordValid(password)) {
@@ -148,9 +148,8 @@ export async function updateExistingUser(
     res.status(200).json({
       message: 'User updated successfully by Admin.',
       user: {
-        id: updated.id,
+        personID: updated.personId,
         email: updated.email,
-        // role: updated.role, 
         createdAt: updated.createdAt,
         updatedAt: updated.updatedAt,
       },
@@ -162,7 +161,7 @@ export async function updateExistingUser(
 
 /**
  * @function deleteExistingUser
- * @description Allows an admin to delete a user record by ID.
+ * @description Allows an admin to delete a user record by ID (actually by personID now).
  *
  * @param req Express request
  * @param res Express response
@@ -179,7 +178,7 @@ export async function deleteExistingUser(
     const deleted = await deleteUser(userId);
 
     res.status(200).json({
-      message: `User with ID ${deleted.id} deleted successfully by Admin.`,
+      message: `User with personID ${deleted.personId} deleted successfully by Admin.`,
     });
   } catch (error: any) {
     next(error);

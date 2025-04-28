@@ -7,7 +7,7 @@
  * - findByEmail: Finds a user by their email address
  * - updatePassword: Updates a user's password with a new hashed password
  * - findByResetToken: Retrieves a user by their reset token (for password reset flows)
- * - findById: Retrieves a user by its primary key (id)
+ * - findById: Retrieves a user by its primary key (personID)
  * - findAllUsers: Retrieves all user records (admin usage)
  * - updateUser: Updates arbitrary fields of a user (email, password, etc.)
  * - deleteUser: Removes a user record entirely
@@ -17,7 +17,7 @@
  * - bcrypt for secure password hashing
  *
  * @notes
- * - The schema now includes a mandatory `personId` referencing Person.
+ * - The schema now includes a mandatory `personID` referencing Person.
  * - Roles are attached via a many-to-many relationship with Role.
  * - We flatten user roles into user.roles in the passport strategies.
  */
@@ -59,7 +59,6 @@ export async function createUser({
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Attempt to connect to the role or default to 'USER'
-    // We'll look up the role by name. If not found, you can decide to create it or throw an error.
     let connectRoleData = [];
     let roleName = role || 'USER';
 
@@ -68,12 +67,8 @@ export async function createUser({
     });
 
     if (!foundRole) {
-      // You can decide to create the role or throw an error.
-      // For demonstration, let's throw an error:
+      // For demonstration, we throw an error if role not found:
       throw new Error(`Role "${roleName}" not found in the database.`);
-      // Alternatively, you could do:
-      // const createdRole = await prisma.role.create({ data: { name: roleName }});
-      // connectRoleData = [{ roleId: createdRole.id }];
     } else {
       connectRoleData = [
         {
@@ -85,11 +80,9 @@ export async function createUser({
     // Create user with the chosen Person ID
     const newUser = await prisma.user.create({
       data: {
+        personId: personId, // same value for PK and foreign key
         email,
         password: hashedPassword,
-        person: {
-          connect: { id: personId },
-        },
         userRoles: {
           create: connectRoleData,
         },
@@ -125,7 +118,7 @@ export async function updatePassword(
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { personId: userId }, // changed from id -> personID
       data: {
         password: hashedPassword,
         updatedAt: new Date(),
@@ -152,7 +145,7 @@ export async function findByResetToken(token: string): Promise<User | null> {
 export async function findById(id: string): Promise<User | null> {
   try {
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { personId: id }, // changed from id -> personID
     });
     return user;
   } catch (error) {
@@ -180,10 +173,7 @@ export async function updateUser(
   data: Partial<User>,
 ): Promise<User> {
   try {
-    // Password hashing if data.password is present could be done here.
-    // For now, we assume a separate function handles password changes.
     const { password: plainPassword, ...rest } = data;
-
     let updateData: any = { ...rest, updatedAt: new Date() };
 
     if (plainPassword) {
@@ -192,7 +182,7 @@ export async function updateUser(
     }
 
     const updated = await prisma.user.update({
-      where: { id: userId },
+      where: { personId: userId }, // changed from id -> personID
       data: updateData,
     });
     return updated;
@@ -204,7 +194,7 @@ export async function updateUser(
 export async function deleteUser(userId: string): Promise<User> {
   try {
     const deleted = await prisma.user.delete({
-      where: { id: userId },
+      where: { personId: userId }, // changed from id -> personID
     });
     return deleted;
   } catch (error: any) {

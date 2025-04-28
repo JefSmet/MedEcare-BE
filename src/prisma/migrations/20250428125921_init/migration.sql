@@ -5,8 +5,9 @@ BEGIN TRAN;
 -- CreateTable
 CREATE TABLE [dbo].[Person] (
     [id] NVARCHAR(1000) NOT NULL,
-    [firstName] NVARCHAR(1000),
-    [lastName] NVARCHAR(1000),
+    [firstName] NVARCHAR(1000) NOT NULL,
+    [lastName] NVARCHAR(1000) NOT NULL,
+    [dateOfBirth] DATETIME2 NOT NULL,
     [createdAt] DATETIME2 NOT NULL CONSTRAINT [Person_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
     [updatedAt] DATETIME2 NOT NULL,
     CONSTRAINT [Person_pkey] PRIMARY KEY CLUSTERED ([id])
@@ -14,17 +15,15 @@ CREATE TABLE [dbo].[Person] (
 
 -- CreateTable
 CREATE TABLE [dbo].[User] (
-    [id] NVARCHAR(1000) NOT NULL,
+    [personId] NVARCHAR(1000) NOT NULL,
     [email] NVARCHAR(1000) NOT NULL,
     [password] NVARCHAR(1000) NOT NULL,
-    [personId] NVARCHAR(1000) NOT NULL,
     [createdAt] DATETIME2 NOT NULL CONSTRAINT [User_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
     [updatedAt] DATETIME2 NOT NULL,
     [resetToken] NVARCHAR(1000),
     [resetExpire] DATETIME2,
-    CONSTRAINT [User_pkey] PRIMARY KEY CLUSTERED ([id]),
-    CONSTRAINT [User_email_key] UNIQUE NONCLUSTERED ([email]),
-    CONSTRAINT [User_personId_key] UNIQUE NONCLUSTERED ([personId])
+    CONSTRAINT [User_pkey] PRIMARY KEY CLUSTERED ([personId]),
+    CONSTRAINT [User_email_key] UNIQUE NONCLUSTERED ([email])
 );
 
 -- CreateTable
@@ -108,13 +107,13 @@ CREATE TABLE [dbo].[UserConstraint] (
 ALTER TABLE [dbo].[User] ADD CONSTRAINT [User_personId_fkey] FOREIGN KEY ([personId]) REFERENCES [dbo].[Person]([id]) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE [dbo].[UserRole] ADD CONSTRAINT [UserRole_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([id]) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE [dbo].[UserRole] ADD CONSTRAINT [UserRole_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([personId]) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE [dbo].[UserRole] ADD CONSTRAINT [UserRole_roleId_fkey] FOREIGN KEY ([roleId]) REFERENCES [dbo].[Role]([id]) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE [dbo].[RefreshToken] ADD CONSTRAINT [RefreshToken_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([id]) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE [dbo].[RefreshToken] ADD CONSTRAINT [RefreshToken_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([personId]) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE [dbo].[ShiftTypeRate] ADD CONSTRAINT [ShiftTypeRate_shiftTypeId_fkey] FOREIGN KEY ([shiftTypeId]) REFERENCES [dbo].[ShiftType]([id]) ON DELETE NO ACTION ON UPDATE CASCADE;
