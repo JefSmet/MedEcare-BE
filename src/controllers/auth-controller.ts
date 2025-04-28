@@ -121,7 +121,7 @@ export async function register(
     res.status(201).json({
       message: 'Registration successful.',
       user: {
-        personID: newUser.personId,
+        personId: newUser.personId,
         email: newUser.email,
       },
     });
@@ -167,8 +167,8 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + refreshExpireDays);
 
-      // Changed: user.id => user.personID
-      await storeRefreshToken(user.personID, tokens.refreshToken, expiresAt);
+      // Changed: user.id => user.
+      await storeRefreshToken(user.personId, tokens.refreshToken, expiresAt);
 
       const isProd = process.env.NODE_ENV === 'production';
       const cookieOptions = {
@@ -189,11 +189,9 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       res.status(200).json({
         message: 'Login successful.',
         user: {
-          personID: user.personID,
+          personId: user.personId,
           email: user.email,
           roles: user.roles,
-          // Renamed the property from user.personId to user.personID for consistency
-          personId: user.personID,
         },
       });
     } catch (tokenError) {
@@ -245,7 +243,7 @@ export async function refreshToken(
     const { platform = 'web' } = req.body as {
       platform?: 'web' | 'mobile' | 'web-persist';
     };
-    const newTokens = generateTokens({ personID: userId } as any, platform);
+    const newTokens = generateTokens({ personId: userId } as any, platform);
 
     // Decide refresh token expiry in days for new token
     let refreshExpireDays: number;
@@ -389,9 +387,9 @@ export async function changePassword(
   next: NextFunction,
 ): Promise<void> {
   try {
-    // Adjusted to read personID from req.user
-    const userFromJwt = req.user as { personID: string } | undefined;
-    if (!userFromJwt || !userFromJwt.personID) {
+    // Adjusted to read personId from req.user
+    const userFromJwt = req.user as { personId: string } | undefined;
+    if (!userFromJwt || !userFromJwt.personId) {
       res.status(401).json({ error: 'Unauthorized or invalid token.' });
       return;
     }
@@ -404,7 +402,7 @@ export async function changePassword(
       return;
     }
 
-    const dbUser = await findById(userFromJwt.personID);
+    const dbUser = await findById(userFromJwt.personId);
     if (!dbUser) {
       res.status(404).json({ error: 'User not found.' });
       return;

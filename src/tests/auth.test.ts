@@ -49,7 +49,7 @@ describe('AUTHENTICATION FLOWS', () => {
       if (res.status === 201) {
         expect(res.body).toHaveProperty('message', 'Registration successful.');
         expect(res.body.user).toHaveProperty('email', testEmail);
-        expect(res.body.user).toHaveProperty('personID');
+        expect(res.body.user).toHaveProperty('personId');
       } else {
         // Possibly 400 if something was invalid
         expect([201, 400]).toContain(res.status);

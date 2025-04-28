@@ -25,7 +25,7 @@ const prisma = new PrismaClient();
 
 describe('ADMIN FLOWS', () => {
   let adminCookies: string[] = [];
-  let normalUserId: string; // This will store the personID of a "normal" user
+  let normalUserId: string; // This will store the personId of a "normal" user
 
   // Hardcode an admin user email for the tests
   const adminEmail = `admin_tester_${Date.now()}@example.com`;
@@ -156,9 +156,9 @@ describe('ADMIN FLOWS', () => {
       // In practice, 'createNewUser' might fail if personId is required and not provided.
       // This is just a test illustration. Adjust in real code as needed.
       if (res.status === 201) {
-        expect(res.body.user).toHaveProperty('personID');
+        expect(res.body.user).toHaveProperty('personId');
         expect(res.body.user).toHaveProperty('email');
-        normalUserId = res.body.user.personID;
+        normalUserId = res.body.user.personId;
       } else {
         // Possibly 400 if your real code requires a personId
         expect([201, 400]).toContain(res.status);

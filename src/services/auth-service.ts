@@ -27,7 +27,7 @@ const prisma = new PrismaClient();
 /**
  * @function storeRefreshToken
  * @description Stores a refresh token in the database
- * @param {string} userId - The unique ID of the user (which is actually personID in our schema)
+ * @param {string} userId - The unique ID of the user (which is actually personId in our schema)
  * @param {string} token - The refresh token string (JWT)
  * @param {Date} expiresAt - The date/time when the token expires
  * @returns {Promise<RefreshToken>} - A promise resolving to the stored RefreshToken record
@@ -102,7 +102,7 @@ export async function removeRefreshToken(token: string): Promise<RefreshToken> {
  * @description Updates a user record with a reset token and expiration date,
  *              storing them in the 'resetToken' and 'resetExpire' columns.
  *
- * @param {string} userId - The unique ID of the user (personID)
+ * @param {string} userId - The unique ID of the user (personId)
  * @param {string} token - The reset token (could be random string or JWT)
  * @param {Date} expiresAt - When the reset token should expire
  * @returns {Promise<void>} - Resolves when the update is successful
@@ -117,7 +117,7 @@ export async function storeResetToken(
 ): Promise<void> {
   try {
     await prisma.user.update({
-      where: { personId: userId }, // changed from id -> personID
+      where: { personId: userId }, // changed from id -> personId
       data: {
         resetToken: token,
         resetExpire: expiresAt,

@@ -7,7 +7,7 @@
  * - findByEmail: Finds a user by their email address
  * - updatePassword: Updates a user's password with a new hashed password
  * - findByResetToken: Retrieves a user by their reset token (for password reset flows)
- * - findById: Retrieves a user by its primary key (personID)
+ * - findById: Retrieves a user by its primary key (personId)
  * - findAllUsers: Retrieves all user records (admin usage)
  * - updateUser: Updates arbitrary fields of a user (email, password, etc.)
  * - deleteUser: Removes a user record entirely
@@ -17,7 +17,7 @@
  * - bcrypt for secure password hashing
  *
  * @notes
- * - The schema now includes a mandatory `personID` referencing Person.
+ * - The schema now includes a mandatory `personId` referencing Person.
  * - Roles are attached via a many-to-many relationship with Role.
  * - We flatten user roles into user.roles in the passport strategies.
  */
@@ -118,7 +118,7 @@ export async function updatePassword(
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     const updatedUser = await prisma.user.update({
-      where: { personId: userId }, // changed from id -> personID
+      where: { personId: userId }, // changed from id -> personId
       data: {
         password: hashedPassword,
         updatedAt: new Date(),
@@ -145,7 +145,7 @@ export async function findByResetToken(token: string): Promise<User | null> {
 export async function findById(id: string): Promise<User | null> {
   try {
     const user = await prisma.user.findUnique({
-      where: { personId: id }, // changed from id -> personID
+      where: { personId: id }, // changed from id -> personId
     });
     return user;
   } catch (error) {
@@ -182,7 +182,7 @@ export async function updateUser(
     }
 
     const updated = await prisma.user.update({
-      where: { personId: userId }, // changed from id -> personID
+      where: { personId: userId }, // changed from id -> personId
       data: updateData,
     });
     return updated;
@@ -194,7 +194,7 @@ export async function updateUser(
 export async function deleteUser(userId: string): Promise<User> {
   try {
     const deleted = await prisma.user.delete({
-      where: { personId: userId }, // changed from id -> personID
+      where: { personId: userId }, // changed from id -> personId
     });
     return deleted;
   } catch (error: any) {

@@ -46,9 +46,9 @@ export async function listUsers(
 ): Promise<void> {
   try {
     const users = await findAllUsers();
-    // Adjust to show personID instead of id
+    // Adjust to show personId instead of id
     const sanitized = users.map((u) => ({
-      personID: u.personId,
+      personId: u.personId,
       email: u.email,
       createdAt: u.createdAt,
       updatedAt: u.updatedAt,
@@ -99,7 +99,7 @@ export async function createNewUser(
     res.status(201).json({
       message: 'User created successfully by Admin.',
       user: {
-        personID: newUser.personId,
+        personId: newUser.personId,
         email: newUser.email,
       },
     });
@@ -148,7 +148,7 @@ export async function updateExistingUser(
     res.status(200).json({
       message: 'User updated successfully by Admin.',
       user: {
-        personID: updated.personId,
+        personId: updated.personId,
         email: updated.email,
         createdAt: updated.createdAt,
         updatedAt: updated.updatedAt,
@@ -161,7 +161,7 @@ export async function updateExistingUser(
 
 /**
  * @function deleteExistingUser
- * @description Allows an admin to delete a user record by ID (actually by personID now).
+ * @description Allows an admin to delete a user record by ID (actually by personId now).
  *
  * @param req Express request
  * @param res Express response
@@ -178,7 +178,7 @@ export async function deleteExistingUser(
     const deleted = await deleteUser(userId);
 
     res.status(200).json({
-      message: `User with personID ${deleted.personId} deleted successfully by Admin.`,
+      message: `User with personId ${deleted.personId} deleted successfully by Admin.`,
     });
   } catch (error: any) {
     next(error);
