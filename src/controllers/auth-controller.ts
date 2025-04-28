@@ -37,6 +37,7 @@ import {
 } from '../services/user-service';
 import { isPasswordValid } from '../utils/password-validator';
 import { generateTokens } from '../utils/token-utils';
+import { parse } from 'path';
 
 interface RegisterRequestBody {
   email?: string;
@@ -260,16 +261,22 @@ export async function refreshToken(
 
     await storeRefreshToken(userId, newTokens.refreshToken, newExpiresAt);
 
+
+    let accessMaxAge: number;
+    accessMaxAge = parseInt((process.env.ACCESS_TOKEN_EXPIRY || '1h').replace('h', ''), 10) * 60 * 1000; // Default to 1 hour if not set
+
     const isProd = process.env.NODE_ENV === 'production';
     res.cookie('accessToken', newTokens.accessToken, {
       httpOnly: true,
       secure: isProd,
       sameSite: 'strict',
+      maxAge: accessMaxAge,
     });
     res.cookie('refreshToken', newTokens.refreshToken, {
       httpOnly: true,
       secure: isProd,
       sameSite: 'strict',
+      expires: newExpiresAt,
     });
 
     res.status(200).json({
