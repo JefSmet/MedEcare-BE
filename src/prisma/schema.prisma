@@ -9,10 +9,10 @@ generator client {
 
 ////////////////////////////////////////////////////////////////////////////////
 //  1. Person & User (1-to-1 relationship), with Roles assigned to the User
-//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 model Person {
-  id          String   @id @default(uuid())
+  id          String   @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
   firstName   String
   lastName    String
   dateOfBirth DateTime
@@ -30,7 +30,7 @@ model Person {
 }
 
 model User {
-  personId String @id
+  personId String @id @db.UniqueIdentifier
   email    String @unique
   password String
 
@@ -51,17 +51,17 @@ model User {
 
 ////////////////////////////////////////////////////////////////////////////////
 //  2. Roles (M:N with User)
-//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 model Role {
-  id        String     @id @default(uuid())
+  id        String     @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
   name      String     @unique
   userRoles UserRole[]
 }
 
 model UserRole {
-  userId String
-  roleId String
+  userId String @db.UniqueIdentifier
+  roleId String @db.UniqueIdentifier
 
   user User @relation(fields: [userId], references: [personId])
   role Role @relation(fields: [roleId], references: [id])
@@ -71,12 +71,12 @@ model UserRole {
 
 ////////////////////////////////////////////////////////////////////////////////
 //  3. RefreshToken (for login/passport-flow)
-//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 model RefreshToken {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
   token     String   @unique
-  userId    String
+  userId    String   @db.UniqueIdentifier
   user      User     @relation(fields: [userId], references: [personId])
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -84,10 +84,10 @@ model RefreshToken {
 
 ////////////////////////////////////////////////////////////////////////////////
 //  4. ShiftType + ShiftTypeRate (time-based rates)
-//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 model ShiftType {
-  id   String @id @default(uuid())
+  id   String @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
   name String
 
   // Option A: only time & duration
@@ -110,8 +110,8 @@ model ShiftType {
 }
 
 model ShiftTypeRate {
-  id          String    @id @default(uuid())
-  shiftTypeId String
+  id          String    @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
+  shiftTypeId String    @db.UniqueIdentifier
   shiftType   ShiftType @relation(fields: [shiftTypeId], references: [id])
 
   rate       Float
@@ -124,20 +124,20 @@ model ShiftTypeRate {
 
 ////////////////////////////////////////////////////////////////////////////////
 //  5. Activity (shifts, leave, conference, etc.)
-//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 model Activity {
-  id           String   @id @default(uuid())
+  id           String   @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
   activityType String   // "SHIFT", "LEAVE", "CONFERENCE", etc.
   start        DateTime
   end          DateTime
 
   // Relation to the person (doctor/nurse/etc.)
-  personId String
+  personId String @db.UniqueIdentifier
   person   Person @relation(fields: [personId], references: [id])
 
   // Optional link to ShiftType (if this activity is a SHIFT)
-  shiftTypeId String?
+  shiftTypeId String? @db.UniqueIdentifier
   shiftType   ShiftType? @relation(fields: [shiftTypeId], references: [id])
 
   createdAt DateTime @default(now())
@@ -146,11 +146,11 @@ model Activity {
 
 ////////////////////////////////////////////////////////////////////////////////
 //  6. (Optional) Personal constraints (UserConstraint)
-//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 model UserConstraint {
-  id       String @id @default(uuid())
-  personId String
+  id       String @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
+  personId String @db.UniqueIdentifier
   person   Person @relation(fields: [personId], references: [id])
 
   maxNightShiftsPerWeek     Int?
