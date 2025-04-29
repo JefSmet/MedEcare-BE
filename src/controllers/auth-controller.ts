@@ -37,7 +37,6 @@ import {
 } from '../services/user-service';
 import { isPasswordValid } from '../utils/password-validator';
 import { generateTokens } from '../utils/token-utils';
-import { parse } from 'path';
 
 interface RegisterRequestBody {
   email?: string;
@@ -201,6 +200,52 @@ export function login(req: Request, res: Response, next: NextFunction): void {
   })(req, res, next);
 }
 
+/**
+ * @swagger
+ * /auth/refresh-token:
+ *   post:
+ *     summary: Refresh access token
+ *     description: Uses the refresh token from cookies to issue new access and refresh tokens
+ *     tags: [Authentication]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               platform:
+ *                 type: string
+ *                 enum: [web, mobile, web-persist]
+ *                 default: web
+ *     responses:
+ *       200:
+ *         description: Tokens successfully renewed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tokens successfully renewed.
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     personId:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     roles:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *       400:
+ *         description: No refresh token cookie present
+ *       401:
+ *         description: Invalid or expired refresh token
+ *       404:
+ *         description: Refresh token not found or already invalidated
+ */
 export async function refreshToken(
   req: Request,
   res: Response,
@@ -244,6 +289,14 @@ export async function refreshToken(
     const { platform = 'web' } = req.body as {
       platform?: 'web' | 'mobile' | 'web-persist';
     };
+
+    // Get user data to include in response
+    const user = await findById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found.' });
+      return;
+    }
+
     const newTokens = generateTokens({ personId: userId } as any, platform);
 
     // Decide refresh token expiry in days for new token
@@ -261,9 +314,11 @@ export async function refreshToken(
 
     await storeRefreshToken(userId, newTokens.refreshToken, newExpiresAt);
 
-
     let accessMaxAge: number;
-    accessMaxAge = parseInt((process.env.ACCESS_TOKEN_EXPIRY || '1h').replace('h', ''), 10) * 60 * 1000; // Default to 1 hour if not set
+    accessMaxAge =
+      parseInt((process.env.ACCESS_TOKEN_EXPIRY || '1h').replace('h', ''), 10) *
+      60 *
+      1000; // Default to 1 hour if not set
 
     const isProd = process.env.NODE_ENV === 'production';
     res.cookie('accessToken', newTokens.accessToken, {
@@ -281,12 +336,51 @@ export async function refreshToken(
 
     res.status(200).json({
       message: 'Tokens successfully renewed.',
+      user: {
+        personId: user.personId,
+        email: user.email,
+        // Use optional chaining and a fallback empty array to handle missing roles property
+        roles: (user as any).roles || [],
+      },
     });
   } catch (error: any) {
     next(error);
   }
 }
 
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request password reset
+ *     description: Sends a password reset email to the provided email address if a user with that email exists
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *             required:
+ *               - email
+ *     responses:
+ *       200:
+ *         description: Reset instructions sent (returns 200 even if email doesn't exist for security)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Reset instructions have been sent to the provided email address (if valid).
+ *       400:
+ *         description: Missing email in request
+ */
 interface ForgotPasswordRequestBody {
   email?: string;
 }
