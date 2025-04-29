@@ -22,8 +22,14 @@
  * - We flatten user roles into user.roles in the passport strategies.
  */
 
-import { PrismaClient, User } from '@prisma/client';
+import { PrismaClient, Role, User, UserRole } from '@prisma/client';
 import bcrypt from 'bcrypt';
+
+// Define the UserWithRoles interface to extend User
+interface UserWithRoles extends User {
+  userRoles: (UserRole & { role: Role })[];
+  roles: string[]; // Array of role names
+}
 
 const prisma = new PrismaClient();
 
@@ -142,15 +148,24 @@ export async function findByResetToken(token: string): Promise<User | null> {
   }
 }
 
-export async function findById(id: string): Promise<User | null> {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { personId: id }, // changed from id -> personId
-    });
-    return user;
-  } catch (error) {
-    throw error;
-  }
+export async function findById(id: string): Promise<UserWithRoles | null> {
+  const user = await prisma.user.findUnique({
+    where: { personId: id },
+    include: {
+      userRoles: {
+        include: {
+          role: true,
+        },
+      },
+    },
+  });
+
+  if (!user) return null;
+
+  // Eventueel 'roles' toevoegen net zoals in passport
+  const userWithRoles = user as UserWithRoles;
+  userWithRoles.roles = userWithRoles.userRoles.map((ur) => ur.role.name);
+  return userWithRoles;
 }
 
 export async function findAllUsers(): Promise<User[]> {

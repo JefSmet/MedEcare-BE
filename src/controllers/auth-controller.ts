@@ -340,7 +340,7 @@ export async function refreshToken(
         personId: user.personId,
         email: user.email,
         // Use optional chaining and a fallback empty array to handle missing roles property
-        roles: (user as any).roles || [],
+        roles: user.roles,
       },
     });
   } catch (error: any) {
