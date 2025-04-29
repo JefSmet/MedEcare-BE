@@ -91,7 +91,7 @@ const router = Router();
  *                 user:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     personId:
  *                       type: string
  *                     email:
  *                       type: string
@@ -99,8 +99,6 @@ const router = Router();
  *                       type: array
  *                       items:
  *                         type: string
- *                     personId:
- *                       type: string
  *       401:
  *         description: Invalid credentials
  *       429:

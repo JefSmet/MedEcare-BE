@@ -37,11 +37,18 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - dateOfBirth
  *             properties:
  *               firstName:
  *                 type: string
  *               lastName:
  *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
  *     responses:
  *       201:
  *         description: The newly created person

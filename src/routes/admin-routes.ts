@@ -36,6 +36,10 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - personId
  *             properties:
  *               email:
  *                 type: string
@@ -43,6 +47,9 @@ const router = Router();
  *                 type: string
  *               role:
  *                 type: string
+ *               personId:
+ *                 type: string
+ *                 description: Associated Person ID
  *     responses:
  *       201:
  *         description: User successfully created
