@@ -4,7 +4,7 @@ BEGIN TRAN;
 
 -- CreateTable
 CREATE TABLE [dbo].[Person] (
-    [id] NVARCHAR(1000) NOT NULL,
+    [id] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [Person_id_df] DEFAULT newsequentialid(),
     [firstName] NVARCHAR(1000) NOT NULL,
     [lastName] NVARCHAR(1000) NOT NULL,
     [dateOfBirth] DATETIME2 NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE [dbo].[Person] (
 
 -- CreateTable
 CREATE TABLE [dbo].[User] (
-    [personId] NVARCHAR(1000) NOT NULL,
+    [personId] UNIQUEIDENTIFIER NOT NULL,
     [email] NVARCHAR(1000) NOT NULL,
     [password] NVARCHAR(1000) NOT NULL,
     [createdAt] DATETIME2 NOT NULL CONSTRAINT [User_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
@@ -28,7 +28,7 @@ CREATE TABLE [dbo].[User] (
 
 -- CreateTable
 CREATE TABLE [dbo].[Role] (
-    [id] NVARCHAR(1000) NOT NULL,
+    [id] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [Role_id_df] DEFAULT newsequentialid(),
     [name] NVARCHAR(1000) NOT NULL,
     CONSTRAINT [Role_pkey] PRIMARY KEY CLUSTERED ([id]),
     CONSTRAINT [Role_name_key] UNIQUE NONCLUSTERED ([name])
@@ -36,16 +36,16 @@ CREATE TABLE [dbo].[Role] (
 
 -- CreateTable
 CREATE TABLE [dbo].[UserRole] (
-    [userId] NVARCHAR(1000) NOT NULL,
-    [roleId] NVARCHAR(1000) NOT NULL,
+    [userId] UNIQUEIDENTIFIER NOT NULL,
+    [roleId] UNIQUEIDENTIFIER NOT NULL,
     CONSTRAINT [UserRole_pkey] PRIMARY KEY CLUSTERED ([userId],[roleId])
 );
 
 -- CreateTable
 CREATE TABLE [dbo].[RefreshToken] (
-    [id] NVARCHAR(1000) NOT NULL,
+    [id] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [RefreshToken_id_df] DEFAULT newsequentialid(),
     [token] NVARCHAR(1000) NOT NULL,
-    [userId] NVARCHAR(1000) NOT NULL,
+    [userId] UNIQUEIDENTIFIER NOT NULL,
     [expiresAt] DATETIME2 NOT NULL,
     [createdAt] DATETIME2 NOT NULL CONSTRAINT [RefreshToken_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT [RefreshToken_pkey] PRIMARY KEY CLUSTERED ([id]),
@@ -54,7 +54,7 @@ CREATE TABLE [dbo].[RefreshToken] (
 
 -- CreateTable
 CREATE TABLE [dbo].[ShiftType] (
-    [id] NVARCHAR(1000) NOT NULL,
+    [id] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [ShiftType_id_df] DEFAULT newsequentialid(),
     [name] NVARCHAR(1000) NOT NULL,
     [startHour] INT NOT NULL,
     [startMinute] INT NOT NULL,
@@ -68,8 +68,8 @@ CREATE TABLE [dbo].[ShiftType] (
 
 -- CreateTable
 CREATE TABLE [dbo].[ShiftTypeRate] (
-    [id] NVARCHAR(1000) NOT NULL,
-    [shiftTypeId] NVARCHAR(1000) NOT NULL,
+    [id] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [ShiftTypeRate_id_df] DEFAULT newsequentialid(),
+    [shiftTypeId] UNIQUEIDENTIFIER NOT NULL,
     [rate] FLOAT(53) NOT NULL,
     [validFrom] DATETIME2 NOT NULL,
     [validUntil] DATETIME2,
@@ -80,12 +80,12 @@ CREATE TABLE [dbo].[ShiftTypeRate] (
 
 -- CreateTable
 CREATE TABLE [dbo].[Activity] (
-    [id] NVARCHAR(1000) NOT NULL,
+    [id] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [Activity_id_df] DEFAULT newsequentialid(),
     [activityType] NVARCHAR(1000) NOT NULL,
     [start] DATETIME2 NOT NULL,
     [end] DATETIME2 NOT NULL,
-    [personId] NVARCHAR(1000) NOT NULL,
-    [shiftTypeId] NVARCHAR(1000),
+    [personId] UNIQUEIDENTIFIER NOT NULL,
+    [shiftTypeId] UNIQUEIDENTIFIER,
     [createdAt] DATETIME2 NOT NULL CONSTRAINT [Activity_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
     [updatedAt] DATETIME2 NOT NULL,
     CONSTRAINT [Activity_pkey] PRIMARY KEY CLUSTERED ([id])
@@ -93,8 +93,8 @@ CREATE TABLE [dbo].[Activity] (
 
 -- CreateTable
 CREATE TABLE [dbo].[UserConstraint] (
-    [id] NVARCHAR(1000) NOT NULL,
-    [personId] NVARCHAR(1000) NOT NULL,
+    [id] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [UserConstraint_id_df] DEFAULT newsequentialid(),
+    [personId] UNIQUEIDENTIFIER NOT NULL,
     [maxNightShiftsPerWeek] INT,
     [maxConsecutiveNightShifts] INT,
     [minRestHoursBetweenShifts] INT,

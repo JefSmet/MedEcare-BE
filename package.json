@@ -45,7 +45,7 @@
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node src/prisma/seed.ts"
   },
   "devDependencies": {
     "@prisma/client": "^6.6.0",
