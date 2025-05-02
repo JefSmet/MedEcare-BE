@@ -97,7 +97,7 @@ export async function sendEmail(
       }
       // Using the official Resend client
       await resend.emails.send({
-        from: 'no-reply@yourdomain.com', // Must be verified domain/sender with Resend
+        from: 'no-reply@medecare.be', // Must be verified domain/sender with Resend
         to: recipient,
         subject,
         html: finalHtml,
@@ -112,7 +112,7 @@ export async function sendEmail(
         );
       }
       await transporter.sendMail({
-        from: 'no-reply@yourdomain.com', // Adjust to your actual "from" email
+        from: 'medecare@telenet.be', // Adjust to your actual "from" email
         to: recipient,
         subject,
         text,
@@ -129,7 +129,7 @@ export async function sendEmail(
       }
       const msg = {
         to: recipient,
-        from: 'no-reply@yourdomain.com', // Must match a verified sender in SendGrid
+        from: 'no-reply@medecare.be', // Must match a verified sender in SendGrid
         subject,
         text,
         html: finalHtml,
@@ -159,10 +159,29 @@ export async function sendResetEmail(
   const subject = 'Password Reset Request';
   const text = `We received a request to reset your password. Click the link below to reset it:\n${resetLink}`;
   const html = `
-    <p>We received a request to reset your password.</p>
-    <p>Please click the link below to reset your password:</p>
-    <p><a href="${resetLink}">${resetLink}</a></p>
-  `;
+  <p>We received a request to reset your password.</p>
+  <p>Please click the link below to reset your password:</p>
+  <p>
+    <a
+      href="${resetLink}"
+      style="
+        display: inline-block;
+        background-color: #4CAF50;
+        color: white !important;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+      "
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Reset Password
+    </a>
+  </p>
+  <p>If you did not request this, please ignore this email.</p>
+`;
+
 
   await sendEmail(recipient, subject, text, html);
 }

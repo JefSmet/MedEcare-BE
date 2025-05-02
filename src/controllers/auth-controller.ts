@@ -413,7 +413,7 @@ export async function forgotPassword(
 
     await storeResetToken(user.personId, resetToken, expiresAt);
 
-    const resetLink = `https://your-frontend-app.com/reset-password?token=${resetToken}`;
+    const resetLink = process.env.FRONTEND_ORIGIN+`/MedEcareWC/MedEcare.html?resetToken=${resetToken}`;
     await sendResetEmail(user.email, resetLink);
 
     res.status(200).json({
