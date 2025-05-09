@@ -192,6 +192,8 @@ export function login(req: Request, res: Response, next: NextFunction): void {
           personId: user.personId,
           email: user.email,
           roles: user.roles,
+          firstName: user.person.firstName,
+          lastName: user.person.lastName,
         },
       });
     } catch (tokenError) {
@@ -297,6 +299,13 @@ export async function refreshToken(
       return;
     }
 
+    // const person = await prisma.person.findUnique({
+    //   where: { id: user.personId },
+    // });
+    // if (!person) {
+    //   res.status(404).json({ error: 'Person not found.' });
+    //   return;
+    // }
     const newTokens = generateTokens({ personId: userId } as any, platform);
 
     // Decide refresh token expiry in days for new token
@@ -339,6 +348,8 @@ export async function refreshToken(
       user: {
         personId: user.personId,
         email: user.email,
+        firstName: user.person.firstName,	
+        lastName: user.person.lastName,
         // Use optional chaining and a fallback empty array to handle missing roles property
         roles: user.roles,
       },

@@ -18,7 +18,7 @@
  * - We flatten the userRoles into an array of role names (user.roles = ['ADMIN', 'USER', etc.]).
  */
 
-import { PrismaClient, User, UserRole, Role } from '@prisma/client';
+import { PrismaClient, User, UserRole, Role, Person } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
@@ -34,6 +34,7 @@ interface UserWithRoles extends User {
     role: Role;
   })[];
   roles?: string[];
+  person?: Person; // Added person relationship
 }
 
 const prisma = new PrismaClient();
@@ -60,6 +61,7 @@ passport.use(
               role: true,
             },
           },
+          person: true, // Include the Person record if needed
         },
       })) as UserWithRoles | null;
 
@@ -118,6 +120,7 @@ passport.use(
               role: true,
             },
           },
+          person: true,
         },
       })) as UserWithRoles | null;
 

@@ -22,13 +22,14 @@
  * - We flatten user roles into user.roles in the passport strategies.
  */
 
-import { PrismaClient, Role, User, UserRole } from '@prisma/client';
+import { PrismaClient, Role, User, UserRole, Person } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 // Define the UserWithRoles interface to extend User
 interface UserWithRoles extends User {
   userRoles: (UserRole & { role: Role })[];
   roles: string[]; // Array of role names
+  person: Person; // Include the Person record if needed
 }
 
 const prisma = new PrismaClient();
@@ -157,6 +158,7 @@ export async function findById(id: string): Promise<UserWithRoles | null> {
           role: true,
         },
       },
+      person: true, // Include the Person record if needed
     },
   });
 
