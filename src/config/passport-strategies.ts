@@ -10,7 +10,7 @@ import {
 import { Request } from 'express';
 
 /**
- * 1) AuthenticatedUser interface (ons eigen “DTO” voor de ingelogde gebruiker)
+ * 1) AuthenticatedUser interface (our own “DTO” for the logged-in user)
  */
 export interface AuthenticatedUser {
   personId: string;
@@ -18,11 +18,11 @@ export interface AuthenticatedUser {
   roles: string[];
   firstName: string;
   lastName: string;
-  dateOfBirth: Date; // Toegevoegd
+  dateOfBirth: Date; // Added
 }
 
 /**
- * 2) Helper functie om van een Prisma-user naar AuthenticatedUser te mappen
+ * 2) Helper function to map from a Prisma user to AuthenticatedUser
  */
 function toAuthenticatedUser(
   dbUser: User & {
@@ -53,7 +53,7 @@ const localOpts = {
 passport.use(
   new LocalStrategy(localOpts, async (email, password, done) => {
     try {
-      // Haal de user incl. person + roles uit de DB
+      // Fetch the user including person and roles from the DB
       const dbUser = await prisma.user.findUnique({
         where: { email },
         include: {
@@ -71,7 +71,7 @@ passport.use(
         return done(null, false, { message: 'Invalid credentials (password mismatch).' });
       }
 
-      // Map naar AuthenticatedUser
+      // Map to AuthenticatedUser
       const authUser = toAuthenticatedUser(dbUser);
       return done(null, authUser);
     } catch (err) {
@@ -81,7 +81,7 @@ passport.use(
 );
 
 /**
- * B) Cookie Extractor voor de JWT
+ * B) Cookie extractor for the JWT
  */
 function cookieExtractor(req: Request): string | null {
   if (req && req.cookies && req.cookies.accessToken) {
@@ -101,7 +101,7 @@ const jwtOpts: StrategyOptions = {
 passport.use(
   new JwtStrategy(jwtOpts, async (payload: any, done: VerifiedCallback) => {
     try {
-      // Zoeken op personId in payload
+      // Find by personId in payload
       const dbUser = await prisma.user.findUnique({
         where: { personId: payload.id },
         include: {
@@ -122,7 +122,7 @@ passport.use(
 );
 
 /**
- * D) initPassportStrategies() (optioneel)
+ * D) initPassportStrategies() (optional)
  */
 export function initPassportStrategies(): void {
   // no-op

@@ -1,5 +1,3 @@
-// File: src/controllers/auth-controller.ts
-
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
@@ -7,7 +5,7 @@ import { CookieOptions } from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
 
-// Importeer hier je AuthenticatedUser interface
+// Import the AuthenticatedUser interface here
 import { AuthenticatedUser } from '../config/passport-strategies';
 
 const prisma = new PrismaClient();
@@ -39,7 +37,7 @@ interface RegisterRequestBody {
 }
 
 /**
- * Registratie endpoint
+ * Registration endpoint
  */
 export async function register(
   req: Request,
@@ -75,7 +73,7 @@ export async function register(
       return;
     }
 
-    // Bestaande persoon checken of aanmaken
+    // Check for existing person or create one
     const existingPerson = await prisma.person.findFirst({
       where: { firstName, lastName, dateOfBirth: parsedDate },
     });
@@ -90,7 +88,7 @@ export async function register(
       personId = newPerson.id;
     }
 
-    // Maak de user aan
+    // Create the user
     const newUser = await createUser({ email, password, role, personId });
 
     res.status(201).json({
@@ -135,7 +133,7 @@ export function login(
         const { platform = 'web' } = req.body as LoginRequestBody;
         const tokens = generateTokens({ personId: user.personId } as any, platform);
 
-        // Bepaal refresh-token expiratie
+        // Determine refresh token expiration
         let refreshExpireDays = platform === 'web' ? 7 : 30;
         if (platform === 'web-persist') refreshExpireDays = 30;
 
@@ -252,7 +250,7 @@ export async function refreshToken(
       expires: newExpiresAt,
     });
 
-    // Bouw AuthenticatedUser voor de response
+    // Build AuthenticatedUser for the response
     const authenticatedUser: AuthenticatedUser = {
       personId: dbUser.personId,
       email: dbUser.email,
@@ -358,7 +356,7 @@ export async function resetPassword(
       return;
     }
     await updatePassword(user.personId, newPassword);
-    // Invalideer de token
+    // Invalidate the token
     await storeResetToken(user.personId, '', new Date(0));
 
     res
