@@ -15,7 +15,7 @@ const router = Router();
  * @openapi
  * tags:
  *   name: UserConstraint
- *   description: Endpoints for managing user/person constraints
+ *   description: Endpoints for managing user constraints
  *
  * /admin/user-constraints:
  *   get:
@@ -26,6 +26,26 @@ const router = Router();
  *     responses:
  *       200:
  *         description: List of user constraints
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   personId:
+ *                     type: string
+ *                   maxNightShiftsPerWeek:
+ *                     type: integer
+ *                     nullable: true
+ *                   maxConsecutiveNightShifts:
+ *                     type: integer
+ *                     nullable: true
+ *                   minRestHoursBetweenShifts:
+ *                     type: integer
+ *                     nullable: true
  *   post:
  *     summary: Create a new user constraint
  *     tags: [UserConstraint]
@@ -37,18 +57,24 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - personId
  *             properties:
  *               personId:
  *                 type: string
  *               maxNightShiftsPerWeek:
- *                 type: number
+ *                 type: integer
  *               maxConsecutiveNightShifts:
- *                 type: number
+ *                 type: integer
  *               minRestHoursBetweenShifts:
- *                 type: number
+ *                 type: integer
  *     responses:
  *       201:
  *         description: The newly created constraint
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserConstraint'
  *
  * /admin/user-constraints/{id}:
  *   get:
@@ -65,6 +91,10 @@ const router = Router();
  *     responses:
  *       200:
  *         description: The requested constraint
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserConstraint'
  *       404:
  *         description: Not found
  *   put:
@@ -79,7 +109,6 @@ const router = Router();
  *         schema:
  *           type: string
  *     requestBody:
- *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -88,14 +117,18 @@ const router = Router();
  *               personId:
  *                 type: string
  *               maxNightShiftsPerWeek:
- *                 type: number
+ *                 type: integer
  *               maxConsecutiveNightShifts:
- *                 type: number
+ *                 type: integer
  *               minRestHoursBetweenShifts:
- *                 type: number
+ *                 type: integer
  *     responses:
  *       200:
  *         description: Updated constraint
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserConstraint'
  *       404:
  *         description: Not found
  *   delete:
@@ -112,6 +145,13 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Constraint deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       404:
  *         description: Not found
  */

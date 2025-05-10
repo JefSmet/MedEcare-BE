@@ -1,23 +1,14 @@
-/**
- * @description
- * The Auth Controller handles authentication-related endpoints such as
- * user registration, login, token refresh, password reset, etc.
- *
- * Key changes:
- * - login: sets accessToken and refreshToken in HttpOnly cookies
- * - refreshToken: reads the refreshToken from the cookie, generates new tokens, and sets them again as cookies
- * - logout: clears the refreshToken and accessToken cookies
- *
- * @notes
- * - The JSON response generally contains a 'message' and optionally user info, but not the tokens themselves.
- * - Tokens are stored in the cookies for better security.
- */
+// File: src/controllers/auth-controller.ts
 
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
+import { CookieOptions } from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
+
+// Importeer hier je AuthenticatedUser interface
+import { AuthenticatedUser } from '../config/passport-strategies';
 
 const prisma = new PrismaClient();
 
@@ -47,6 +38,9 @@ interface RegisterRequestBody {
   dateOfBirth?: string;
 }
 
+/**
+ * Registratie endpoint
+ */
 export async function register(
   req: Request,
   res: Response,
@@ -57,66 +51,47 @@ export async function register(
       req.body as RegisterRequestBody;
 
     if (!email || !password) {
-      res.status(400).json({
-        error: 'Email and password are required fields.',
-      });
+      res.status(400).json({ error: 'Email and password are required fields.' });
       return;
     }
-
     if (!firstName || !lastName || !dateOfBirth) {
-      res.status(400).json({
-        error: 'First name, last name, and date of birth are required fields.',
-      });
+      res
+        .status(400)
+        .json({ error: 'First name, last name, and date of birth are required fields.' });
       return;
     }
-
     if (!isPasswordValid(password)) {
-      res.status(400).json({
-        error: 'Password does not meet the required strength policy.',
-      });
+      res
+        .status(400)
+        .json({ error: 'Password does not meet the required strength policy.' });
       return;
     }
 
-    // Validate that dateOfBirth is a valid date
     const parsedDate = new Date(dateOfBirth);
     if (isNaN(parsedDate.getTime())) {
-      res.status(400).json({
-        error: 'Date of birth must be a valid date format (YYYY-MM-DD).',
-      });
+      res
+        .status(400)
+        .json({ error: 'Date of birth must be a valid date format (YYYY-MM-DD).' });
       return;
     }
 
-    // Check if a person with the same name and DOB already exists
+    // Bestaande persoon checken of aanmaken
     const existingPerson = await prisma.person.findFirst({
-      where: {
-        firstName,
-        lastName,
-        dateOfBirth: parsedDate,
-      },
+      where: { firstName, lastName, dateOfBirth: parsedDate },
     });
 
     let personId: string;
-
     if (existingPerson) {
       personId = existingPerson.id;
     } else {
       const newPerson = await prisma.person.create({
-        data: {
-          firstName,
-          lastName,
-          dateOfBirth: parsedDate,
-        },
+        data: { firstName, lastName, dateOfBirth: parsedDate },
       });
       personId = newPerson.id;
     }
 
-    // Create user with the personId
-    const newUser = await createUser({
-      email,
-      password,
-      role,
-      personId,
-    });
+    // Maak de user aan
+    const newUser = await createUser({ email, password, role, personId });
 
     res.status(201).json({
       message: 'Registration successful.',
@@ -136,117 +111,73 @@ interface LoginRequestBody {
   platform?: 'web' | 'mobile' | 'web-persist';
 }
 
-export function login(req: Request, res: Response, next: NextFunction): void {
-  passport.authenticate('local', async (err: any, user: any, info: any) => {
-    if (err) {
-      next(err);
-      return;
-    }
-    if (!user) {
-      res.status(401).json({ error: info?.message || 'Invalid credentials.' });
-      return;
-    }
-
-    try {
-      const { platform = 'web' } = req.body as LoginRequestBody;
-      const tokens = generateTokens(user, platform);
-
-      // Decide the refresh token expiry in days based on platform
-      let refreshExpireDays: number;
-      if (platform === 'mobile') {
-        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || '30d';
-        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
-      } else if (platform === 'web-persist') {
-        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || '30d';
-        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
-      } else {
-        const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || '7d';
-        refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 7;
+/**
+ * Login endpoint
+ */
+export function login(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  passport.authenticate(
+    'local',
+    async (err: any, user: AuthenticatedUser, info: any) => {
+      if (err) {
+        next(err);
+        return;
+      }
+      if (!user) {
+        res.status(401).json({ error: info?.message || 'Invalid credentials.' });
+        return;
       }
 
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + refreshExpireDays);
+      try {
+        const { platform = 'web' } = req.body as LoginRequestBody;
+        const tokens = generateTokens({ personId: user.personId } as any, platform);
 
-      // Changed: user.id => user.
-      await storeRefreshToken(user.personId, tokens.refreshToken, expiresAt);
+        // Bepaal refresh-token expiratie
+        let refreshExpireDays = platform === 'web' ? 7 : 30;
+        if (platform === 'web-persist') refreshExpireDays = 30;
 
-      const isProd = process.env.NODE_ENV === 'production';
-      const cookieOptions = {
-        httpOnly: true,
-        secure: isProd,
-        sameSite: 'strict' as const,
-      };
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + refreshExpireDays);
 
-      // For "web-persist", set a maxAge so the cookies remain after browser close
-      if (platform === 'web-persist') {
-        const maxAgeMs = refreshExpireDays * 24 * 60 * 60 * 1000;
-        Object.assign(cookieOptions, { maxAge: maxAgeMs });
+        await storeRefreshToken(user.personId, tokens.refreshToken, expiresAt);
+
+        // Cookies
+        const isProd = process.env.NODE_ENV === 'production';
+        const cookieOptions: CookieOptions = {
+          httpOnly: true,
+          secure: isProd,
+          sameSite: 'strict',
+        };
+        if (platform === 'web-persist') {
+          cookieOptions.maxAge = refreshExpireDays * 24 * 60 * 60 * 1000;
+        }
+
+        res.cookie('accessToken', tokens.accessToken, cookieOptions);
+        res.cookie('refreshToken', tokens.refreshToken, cookieOptions);
+
+        res.status(200).json({
+          message: 'Login successful.',
+          authenticatedUser: {
+            personId: user.personId,
+            email: user.email,
+            roles: user.roles,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            dateOfBirth: user.dateOfBirth,
+          },
+        });
+      } catch (tokenError) {
+        next(tokenError);
       }
-
-      res.cookie('accessToken', tokens.accessToken, cookieOptions);
-      res.cookie('refreshToken', tokens.refreshToken, cookieOptions);
-
-      res.status(200).json({
-        message: 'Login successful.',
-        user: {
-          personId: user.personId,
-          email: user.email,
-          roles: user.roles,
-          firstName: user.person.firstName,
-          lastName: user.person.lastName,
-        },
-      });
-    } catch (tokenError) {
-      next(tokenError);
-    }
-  })(req, res, next);
+    },
+  )(req, res, next);
 }
 
 /**
- * @swagger
- * /auth/refresh-token:
- *   post:
- *     summary: Refresh access token
- *     description: Uses the refresh token from cookies to issue new access and refresh tokens
- *     tags: [Authentication]
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               platform:
- *                 type: string
- *                 enum: [web, mobile, web-persist]
- *                 default: web
- *     responses:
- *       200:
- *         description: Tokens successfully renewed
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Tokens successfully renewed.
- *                 user:
- *                   type: object
- *                   properties:
- *                     personId:
- *                       type: string
- *                     email:
- *                       type: string
- *                     roles:
- *                       type: array
- *                       items:
- *                         type: string
- *       400:
- *         description: No refresh token cookie present
- *       401:
- *         description: Invalid or expired refresh token
- *       404:
- *         description: Refresh token not found or already invalidated
+ * Refresh-token endpoint
  */
 export async function refreshToken(
   req: Request,
@@ -254,82 +185,60 @@ export async function refreshToken(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const refreshToken = req.cookies?.refreshToken;
-    if (!refreshToken) {
+    const cookie = req.cookies?.refreshToken;
+    if (!cookie) {
       res.status(400).json({ error: 'No refreshToken cookie present.' });
       return;
     }
 
     const secret = process.env.JWT_SECRET || 'changeme';
     let payload: any;
-
     try {
-      payload = jwt.verify(refreshToken, secret);
-    } catch (verifyError) {
+      payload = jwt.verify(cookie, secret);
+    } catch {
       res.status(401).json({ error: 'Invalid or expired refresh token.' });
       return;
     }
 
-    const existingRefresh = await findRefreshToken(refreshToken);
-    if (!existingRefresh) {
+    const existing = await findRefreshToken(cookie);
+    if (!existing) {
       res
         .status(404)
         .json({ error: 'Refresh token not found or already invalidated.' });
       return;
     }
-
-    if (existingRefresh.expiresAt < new Date()) {
-      await removeRefreshToken(refreshToken);
+    if (existing.expiresAt < new Date()) {
+      await removeRefreshToken(cookie);
       res.status(401).json({ error: 'Refresh token is expired.' });
       return;
     }
 
-    // One-time use: remove old refresh token in DB
-    await removeRefreshToken(refreshToken);
+    await removeRefreshToken(cookie);
 
-    const userId = payload.id;
-    const { platform = 'web' } = req.body as {
-      platform?: 'web' | 'mobile' | 'web-persist';
-    };
+    const userId = payload.id as string;
+    const { platform = 'web' } = req.body as { platform?: string };
 
-    // Get user data to include in response
-    const user = await findById(userId);
-    if (!user) {
+    const dbUser = await findById(userId);
+    if (!dbUser) {
       res.status(404).json({ error: 'User not found.' });
       return;
     }
 
-    // const person = await prisma.person.findUnique({
-    //   where: { id: user.personId },
-    // });
-    // if (!person) {
-    //   res.status(404).json({ error: 'Person not found.' });
-    //   return;
-    // }
     const newTokens = generateTokens({ personId: userId } as any, platform);
-
-    // Decide refresh token expiry in days for new token
-    let refreshExpireDays: number;
-    if (platform === 'mobile') {
-      const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_MOBILE || '30d';
-      refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 30;
-    } else {
-      const envExpiry = process.env.REFRESH_TOKEN_EXPIRY_WEB || '7d';
-      refreshExpireDays = parseInt(envExpiry.replace('d', ''), 10) || 7;
-    }
+    let refreshExpireDays = platform === 'web' ? 7 : 30;
+    if (platform === 'web-persist') refreshExpireDays = 30;
 
     const newExpiresAt = new Date();
     newExpiresAt.setDate(newExpiresAt.getDate() + refreshExpireDays);
 
     await storeRefreshToken(userId, newTokens.refreshToken, newExpiresAt);
 
-    let accessMaxAge: number;
-    accessMaxAge =
-      parseInt((process.env.ACCESS_TOKEN_EXPIRY || '1h').replace('h', ''), 10) *
-      60 *
-      1000; // Default to 1 hour if not set
-
     const isProd = process.env.NODE_ENV === 'production';
+    const accessMaxAge =
+      parseInt((process.env.ACCESS_TOKEN_EXPIRY || '1h').replace('h', ''), 10) *
+        60 *
+        1000 || 3600000;
+
     res.cookie('accessToken', newTokens.accessToken, {
       httpOnly: true,
       secure: isProd,
@@ -343,16 +252,19 @@ export async function refreshToken(
       expires: newExpiresAt,
     });
 
+    // Bouw AuthenticatedUser voor de response
+    const authenticatedUser: AuthenticatedUser = {
+      personId: dbUser.personId,
+      email: dbUser.email,
+      roles: dbUser.roles,
+      firstName: dbUser.person.firstName,
+      lastName: dbUser.person.lastName,
+      dateOfBirth: dbUser.person.dateOfBirth,
+    };
+
     res.status(200).json({
       message: 'Tokens successfully renewed.',
-      user: {
-        personId: user.personId,
-        email: user.email,
-        firstName: user.person.firstName,	
-        lastName: user.person.lastName,
-        // Use optional chaining and a fallback empty array to handle missing roles property
-        roles: user.roles,
-      },
+      authenticatedUser,
     });
   } catch (error: any) {
     next(error);
@@ -360,37 +272,7 @@ export async function refreshToken(
 }
 
 /**
- * @swagger
- * /auth/forgot-password:
- *   post:
- *     summary: Request password reset
- *     description: Sends a password reset email to the provided email address if a user with that email exists
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *             required:
- *               - email
- *     responses:
- *       200:
- *         description: Reset instructions sent (returns 200 even if email doesn't exist for security)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Reset instructions have been sent to the provided email address (if valid).
- *       400:
- *         description: Missing email in request
+ * Forgot-password endpoint
  */
 interface ForgotPasswordRequestBody {
   email?: string;
@@ -409,7 +291,6 @@ export async function forgotPassword(
         .json({ error: 'Email is required to request a password reset.' });
       return;
     }
-
     const user = await findByEmail(email);
     if (!user) {
       res
@@ -424,7 +305,9 @@ export async function forgotPassword(
 
     await storeResetToken(user.personId, resetToken, expiresAt);
 
-    const resetLink = process.env.FRONTEND_ORIGIN+`/MedEcareWC/MedEcare.html?resetToken=${resetToken}`;
+    const resetLink =
+      process.env.FRONTEND_ORIGIN +
+      `/MedEcareWC/MedEcare.html?resetToken=${resetToken}`;
     await sendResetEmail(user.email, resetLink);
 
     res.status(200).json({
@@ -436,6 +319,9 @@ export async function forgotPassword(
   }
 }
 
+/**
+ * Reset-password endpoint
+ */
 interface ResetPasswordRequestBody {
   token?: string;
   newPassword?: string;
@@ -448,46 +334,44 @@ export async function resetPassword(
 ): Promise<void> {
   try {
     const { token, newPassword } = req.body as ResetPasswordRequestBody;
-
     if (!token || !newPassword) {
       res.status(400).json({
-        error:
-          'Both "token" and "newPassword" fields are required to reset the password.',
+        error: 'Both "token" and "newPassword" fields are required.',
       });
       return;
     }
-
     const user = await findByResetToken(token);
     if (!user) {
       res.status(404).json({ error: 'Invalid or unknown reset token.' });
       return;
     }
-
     if (!user.resetExpire || user.resetExpire < new Date()) {
-      res.status(400).json({
-        error: 'This reset token has expired. Please request a new one.',
-      });
+      res
+        .status(400)
+        .json({ error: 'This reset token has expired. Please request a new one.' });
       return;
     }
-
     if (!isPasswordValid(newPassword)) {
-      res.status(400).json({
-        error: 'New password does not meet the required strength policy.',
-      });
+      res
+        .status(400)
+        .json({ error: 'New password does not meet the required strength policy.' });
       return;
     }
-
     await updatePassword(user.personId, newPassword);
+    // Invalideer de token
     await storeResetToken(user.personId, '', new Date(0));
 
-    res.status(200).json({
-      message: 'Password has been reset successfully. You can now log in.',
-    });
+    res
+      .status(200)
+      .json({ message: 'Password has been reset successfully. You can now log in.' });
   } catch (error: any) {
     next(error);
   }
 }
 
+/**
+ * Change-password endpoint
+ */
 interface ChangePasswordRequestBody {
   oldPassword?: string;
   newPassword?: string;
@@ -499,18 +383,16 @@ export async function changePassword(
   next: NextFunction,
 ): Promise<void> {
   try {
-    // Adjusted to read personId from req.user
-    const userFromJwt = req.user as { personId: string } | undefined;
-    if (!userFromJwt || !userFromJwt.personId) {
+    const userFromJwt = req.user as AuthenticatedUser | undefined;
+    if (!userFromJwt) {
       res.status(401).json({ error: 'Unauthorized or invalid token.' });
       return;
     }
-
     const { oldPassword, newPassword } = req.body as ChangePasswordRequestBody;
     if (!oldPassword || !newPassword) {
-      res.status(400).json({
-        error: 'Both "oldPassword" and "newPassword" fields are required.',
-      });
+      res
+        .status(400)
+        .json({ error: 'Both oldPassword and newPassword are required.' });
       return;
     }
 
@@ -526,33 +408,32 @@ export async function changePassword(
       res.status(401).json({ error: 'Old password is incorrect.' });
       return;
     }
-
     if (!isPasswordValid(newPassword)) {
       res
         .status(400)
-        .json({ error: 'New password does not meet strength requirements.' });
+        .json({ error: 'New password does not meet the required strength policy.' });
       return;
     }
 
     await updatePassword(dbUser.personId, newPassword);
-
-    res.status(200).json({
-      message: 'Password changed successfully.',
-    });
+    res.status(200).json({ message: 'Password changed successfully.' });
   } catch (error: any) {
     next(error);
   }
 }
 
+/**
+ * Logout endpoint
+ */
 export async function logout(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
   try {
-    const refreshToken = req.cookies?.refreshToken;
-
+    const cookie = req.cookies?.refreshToken;
     const isProd = process.env.NODE_ENV === 'production';
+
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: isProd,
@@ -564,24 +445,19 @@ export async function logout(
       sameSite: 'strict',
     });
 
-    if (!refreshToken) {
-      res.status(200).json({
-        message: 'Logout successful (no token present).',
-      });
+    if (!cookie) {
+      res.status(200).json({ message: 'Logout successful (no token present).' });
       return;
     }
 
     try {
-      await removeRefreshToken(refreshToken);
-      res.status(200).json({
-        message: 'Logout successful. Refresh token invalidated.',
-      });
+      await removeRefreshToken(cookie);
+      res.status(200).json({ message: 'Logout successful. Refresh token invalidated.' });
     } catch (removeError: any) {
       if (removeError.code === 'P2025') {
-        // Token did not exist in DB
-        res.status(200).json({
-          message: 'Logout successful. Token was not found in the DB.',
-        });
+        res
+          .status(200)
+          .json({ message: 'Logout successful. Token was not found in the DB.' });
       } else {
         throw removeError;
       }

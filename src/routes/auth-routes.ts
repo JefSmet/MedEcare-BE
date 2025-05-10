@@ -53,6 +53,20 @@ const router = Router();
  *     responses:
  *       201:
  *         description: User successfully registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     personId:
+ *                       type: string
+ *                     email:
+ *                       type: string
  *       400:
  *         description: Validation error or missing fields
  *
@@ -79,7 +93,7 @@ const router = Router();
  *                 description: "web, mobile, or web-persist"
  *     responses:
  *       200:
- *         description: Login successful; tokens are set as HttpOnly cookies. The JSON contains only a user object plus a message.
+ *         description: Login successful; tokens are set as HttpOnly cookies
  *         content:
  *           application/json:
  *             schema:
@@ -87,8 +101,7 @@ const router = Router();
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Login successful."
- *                 user:
+ *                 authenticatedUser:
  *                   type: object
  *                   properties:
  *                     personId:
@@ -99,6 +112,13 @@ const router = Router();
  *                       type: array
  *                       items:
  *                         type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     dateOfBirth:
+ *                       type: string
+ *                       format: date-time
  *       401:
  *         description: Invalid credentials
  *       429:
@@ -106,10 +126,9 @@ const router = Router();
  *
  * /auth/refresh:
  *   post:
- *     summary: Refresh the JWT tokens via the refreshToken (read from cookie)
+ *     summary: Refresh the JWT tokens via the refreshToken cookie
  *     tags: [Auth]
  *     requestBody:
- *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -121,16 +140,41 @@ const router = Router();
  *     responses:
  *       200:
  *         description: New tokens set in cookies
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 authenticatedUser:
+ *                   type: object
+ *                   properties:
+ *                     personId:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     roles:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     dateOfBirth:
+ *                       type: string
+ *                       format: date-time
  *       400:
  *         description: No refreshToken cookie present
  *       401:
- *         description: Refresh token invalid or expired
+ *         description: Invalid or expired refresh token
  *       404:
  *         description: Refresh token not found
  *
  * /auth/forgot-password:
  *   post:
- *     summary: Request an email to reset your password
+ *     summary: Request a password reset email
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -159,6 +203,9 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - token
+ *               - newPassword
  *             properties:
  *               token:
  *                 type: string
@@ -174,7 +221,7 @@ const router = Router();
  *
  * /auth/change-password:
  *   post:
- *     summary: Change the password of the logged-in user (JWT read from cookie)
+ *     summary: Change the password of the logged-in user (JWT via cookie)
  *     tags: [Auth]
  *     security:
  *       - CookieAuth: []
@@ -184,6 +231,9 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - oldPassword
+ *               - newPassword
  *             properties:
  *               oldPassword:
  *                 type: string
@@ -199,11 +249,18 @@ const router = Router();
  *
  * /auth/logout:
  *   post:
- *     summary: Invalidate the refresh token (from cookie) and clear the auth cookies
+ *     summary: Invalidate the refresh token and clear auth cookies
  *     tags: [Auth]
  *     responses:
  *       200:
- *         description: Refresh token invalidated, cookies cleared
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 router.post('/register', register);
 router.post('/login', loginRateLimiter, login);

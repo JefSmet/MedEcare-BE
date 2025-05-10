@@ -15,19 +15,39 @@ const router = Router();
  * @openapi
  * tags:
  *   name: ShiftTypeRate
- *   description: Endpoints for managing ShiftType rates
+ *   description: Endpoints for managing shift-type rates
  *
  * /admin/shift-type-rates:
  *   get:
- *     summary: List shift type rates
+ *     summary: List all shift-type rates
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Array of shift type rates
+ *         description: Array of shift-type rates
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   shiftTypeId:
+ *                     type: string
+ *                   rate:
+ *                     type: number
+ *                   validFrom:
+ *                     type: string
+ *                     format: date-time
+ *                   validUntil:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
  *   post:
- *     summary: Create a new rate
+ *     summary: Create a new shift-type rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -37,6 +57,10 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - shiftTypeId
+ *               - rate
+ *               - validFrom
  *             properties:
  *               shiftTypeId:
  *                 type: string
@@ -51,10 +75,14 @@ const router = Router();
  *     responses:
  *       201:
  *         description: New rate created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ShiftTypeRate'
  *
  * /admin/shift-type-rates/{id}:
  *   get:
- *     summary: Retrieve a rate
+ *     summary: Retrieve a shift-type rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -66,11 +94,15 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Found rate
+ *         description: The requested rate
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ShiftTypeRate'
  *       404:
  *         description: Not found
  *   put:
- *     summary: Update an existing rate
+ *     summary: Update an existing shift-type rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -98,11 +130,15 @@ const router = Router();
  *                 format: date-time
  *     responses:
  *       200:
- *         description: Updated record
+ *         description: Updated rate record
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ShiftTypeRate'
  *       404:
  *         description: Not found
  *   delete:
- *     summary: Delete a rate
+ *     summary: Delete a shift-type rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -115,6 +151,13 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Deletion successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       404:
  *         description: Not found
  */

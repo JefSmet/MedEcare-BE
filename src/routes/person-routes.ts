@@ -15,7 +15,7 @@ const router = Router();
  * @openapi
  * tags:
  *   name: Person
- *   description: CRUD endpoints for Persons
+ *   description: CRUD endpoints for Person entities
  *
  * /admin/persons:
  *   get:
@@ -26,6 +26,28 @@ const router = Router();
  *     responses:
  *       200:
  *         description: List of persons
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
+ *                   dateOfBirth:
+ *                     type: string
+ *                     format: date
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
  *   post:
  *     summary: Create a new person
  *     tags: [Person]
@@ -52,6 +74,10 @@ const router = Router();
  *     responses:
  *       201:
  *         description: The newly created person
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Person'
  *
  * /admin/persons/{id}:
  *   get:
@@ -68,6 +94,10 @@ const router = Router();
  *     responses:
  *       200:
  *         description: The requested person
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Person'
  *       404:
  *         description: Not found
  *   put:
@@ -94,6 +124,10 @@ const router = Router();
  *     responses:
  *       200:
  *         description: The updated person
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Person'
  *       404:
  *         description: Not found
  *   delete:
@@ -110,6 +144,13 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Deletion successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       404:
  *         description: Not found
  */

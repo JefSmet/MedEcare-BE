@@ -15,7 +15,7 @@ const router = Router();
  * @openapi
  * tags:
  *   name: Activity
- *   description: Endpoints for activities (shifts, leave, conferences, etc.)
+ *   description: Endpoints for managing activities (shifts, leave, conferences, etc.)
  *
  * /admin/activities:
  *   get:
@@ -26,6 +26,28 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Returns a list of all activities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   activityType:
+ *                     type: string
+ *                   start:
+ *                     type: string
+ *                     format: date-time
+ *                   end:
+ *                     type: string
+ *                     format: date-time
+ *                   personId:
+ *                     type: string
+ *                   shiftTypeId:
+ *                     type: string
+ *                     nullable: true
  *   post:
  *     summary: Create a new activity
  *     tags: [Activity]
@@ -37,6 +59,11 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - activityType
+ *               - start
+ *               - end
+ *               - personId
  *             properties:
  *               activityType:
  *                 type: string
@@ -53,6 +80,10 @@ const router = Router();
  *     responses:
  *       201:
  *         description: The newly created activity
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Activity'
  *
  * /admin/activities/{id}:
  *   get:
@@ -69,6 +100,10 @@ const router = Router();
  *     responses:
  *       200:
  *         description: The requested activity
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Activity'
  *       404:
  *         description: Activity not found
  *   put:
@@ -103,6 +138,10 @@ const router = Router();
  *     responses:
  *       200:
  *         description: The updated activity
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Activity'
  *       404:
  *         description: Activity not found
  *   delete:
@@ -119,6 +158,13 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Success message
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       404:
  *         description: Activity not found
  */

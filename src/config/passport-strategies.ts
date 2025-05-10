@@ -1,24 +1,4 @@
-/**
- * @description
- * Configures and initializes Passport authentication strategies (Local & JWT).
- *
- * Key features:
- * - LocalStrategy: Validates user email and password using bcrypt.
- * - JwtStrategy: Validates JWT tokens by verifying signature and checking user existence in DB.
- * - Uses an extended interface (UserWithRoles) to handle the additional 'roles' property.
- *
- * @dependencies
- * - passport, passport-local, passport-jwt
- * - bcrypt for password comparison
- * - prisma client for database lookups
- *
- * @notes
- * - The Local Strategy expects `req.body.email` and `req.body.password`.
- * - The JWT Strategy expects a token in an HttpOnly cookie (customized here).
- * - We flatten the userRoles into an array of role names (user.roles = ['ADMIN', 'USER', etc.]).
- */
-
-import { PrismaClient, User, UserRole, Role, Person } from '@prisma/client';
+import { PrismaClient, User, Person, UserRole, Role } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
@@ -29,21 +9,41 @@ import {
 } from 'passport-jwt';
 import { Request } from 'express';
 
-interface UserWithRoles extends User {
-  userRoles: (UserRole & {
-    role: Role;
-  })[];
-  roles?: string[];
-  person?: Person; // Added person relationship
+/**
+ * 1) AuthenticatedUser interface (ons eigen “DTO” voor de ingelogde gebruiker)
+ */
+export interface AuthenticatedUser {
+  personId: string;
+  email: string;
+  roles: string[];
+  firstName: string;
+  lastName: string;
+  dateOfBirth: Date; // Toegevoegd
+}
+
+/**
+ * 2) Helper functie om van een Prisma-user naar AuthenticatedUser te mappen
+ */
+function toAuthenticatedUser(
+  dbUser: User & {
+    person: Person;
+    userRoles: (UserRole & { role: Role })[];
+  },
+): AuthenticatedUser {
+  return {
+    personId: dbUser.personId,
+    email: dbUser.email,
+    roles: dbUser.userRoles.map((ur) => ur.role.name),
+    firstName: dbUser.person.firstName,
+    lastName: dbUser.person.lastName,
+    dateOfBirth: dbUser.person.dateOfBirth,
+  };
 }
 
 const prisma = new PrismaClient();
 
 /**
- * Local Strategy
- * ----------------------------------------------------------------------------
- * Used to verify the email and password at login time.
- * Expects email & password fields in the request body.
+ * A) Local Strategy
  */
 const localOpts = {
   usernameField: 'email',
@@ -53,43 +53,35 @@ const localOpts = {
 passport.use(
   new LocalStrategy(localOpts, async (email, password, done) => {
     try {
-      const user = (await prisma.user.findUnique({
-        where: { email: email },
+      // Haal de user incl. person + roles uit de DB
+      const dbUser = await prisma.user.findUnique({
+        where: { email },
         include: {
-          userRoles: {
-            include: {
-              role: true,
-            },
-          },
-          person: true, // Include the Person record if needed
+          person: true,
+          userRoles: { include: { role: true } },
         },
-      })) as UserWithRoles | null;
-
-      if (!user) {
-        return done(null, false, {
-          message: 'Invalid credentials (user not found).',
-        });
+      });
+      if (!dbUser) {
+        return done(null, false, { message: 'Invalid credentials (user not found).' });
       }
 
-      const isMatch = await bcrypt.compare(password, user.password);
+      // Check password
+      const isMatch = await bcrypt.compare(password, dbUser.password);
       if (!isMatch) {
-        return done(null, false, {
-          message: 'Invalid credentials (password mismatch).',
-        });
+        return done(null, false, { message: 'Invalid credentials (password mismatch).' });
       }
 
-      user.roles = user.userRoles.map((ur) => ur.role.name);
-      return done(null, user);
-    } catch (error) {
-      return done(error);
+      // Map naar AuthenticatedUser
+      const authUser = toAuthenticatedUser(dbUser);
+      return done(null, authUser);
+    } catch (err) {
+      return done(err);
     }
   }),
 );
 
 /**
- * Cookie Extractor
- * ----------------------------------------------------------------------------
- * Extracts the JWT from the HttpOnly cookie 'accessToken'.
+ * B) Cookie Extractor voor de JWT
  */
 function cookieExtractor(req: Request): string | null {
   if (req && req.cookies && req.cookies.accessToken) {
@@ -99,10 +91,7 @@ function cookieExtractor(req: Request): string | null {
 }
 
 /**
- * JWT Strategy
- * ----------------------------------------------------------------------------
- * Authenticates requests based on a JWT token in the HttpOnly cookie.
- * The payload object contains { id: string } with the user ID.
+ * C) JWT Strategy
  */
 const jwtOpts: StrategyOptions = {
   jwtFromRequest: cookieExtractor,
@@ -112,26 +101,20 @@ const jwtOpts: StrategyOptions = {
 passport.use(
   new JwtStrategy(jwtOpts, async (payload: any, done: VerifiedCallback) => {
     try {
-      const user = (await prisma.user.findUnique({
-        where: { personId: payload.id }, // Changed here: was { id: payload.id }
+      // Zoeken op personId in payload
+      const dbUser = await prisma.user.findUnique({
+        where: { personId: payload.id },
         include: {
-          userRoles: {
-            include: {
-              role: true,
-            },
-          },
           person: true,
+          userRoles: { include: { role: true } },
         },
-      })) as UserWithRoles | null;
-
-      if (!user) {
-        return done(null, false, {
-          message: 'Token not valid (user does not exist).',
-        });
+      });
+      if (!dbUser) {
+        return done(null, false, { message: 'Token invalid (no user)' });
       }
 
-      user.roles = user.userRoles.map((ur) => ur.role.name);
-      return done(null, user);
+      const authUser = toAuthenticatedUser(dbUser);
+      return done(null, authUser);
     } catch (error) {
       return done(error, false);
     }
@@ -139,12 +122,8 @@ passport.use(
 );
 
 /**
- * A helper function to ensure passport strategies are loaded.
- *
- * @notes
- * - This function can be called in app.ts if needed. The presence of `passport.use(...)`
- *   calls automatically loads the strategies when this file is imported.
+ * D) initPassportStrategies() (optioneel)
  */
 export function initPassportStrategies(): void {
-  return;
+  // no-op
 }

@@ -26,6 +26,17 @@ const router = Router();
  *     responses:
  *       200:
  *         description: List of all roles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   name:
+ *                     type: string
  *   post:
  *     summary: Create a new role
  *     tags: [Role]
@@ -37,12 +48,18 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - name
  *             properties:
  *               name:
  *                 type: string
  *     responses:
  *       201:
  *         description: Newly created role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Role'
  *
  * /admin/roles/{id}:
  *   get:
@@ -59,6 +76,10 @@ const router = Router();
  *     responses:
  *       200:
  *         description: The requested role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Role'
  *       404:
  *         description: Not found
  *   put:
@@ -73,16 +94,23 @@ const router = Router();
  *         schema:
  *           type: string
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - name
  *             properties:
  *               name:
  *                 type: string
  *     responses:
  *       200:
  *         description: The updated role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Role'
  *       404:
  *         description: Not found
  *   delete:
@@ -99,6 +127,13 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Deletion successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       404:
  *         description: Not found
  */
