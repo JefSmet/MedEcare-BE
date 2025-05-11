@@ -43,7 +43,7 @@ export async function getRoleById(req: Request, res: Response, next: NextFunctio
 
 export async function createRole(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { name } = req.body;
+    const { name } = req.body.toUpperCase();;
     const newRole = await prisma.role.create({
       data: { name },
     });
@@ -56,7 +56,7 @@ export async function createRole(req: Request, res: Response, next: NextFunction
 export async function updateRole(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name } = req.body.toUpperCase();
 
     const updated = await prisma.role.update({
       where: { id },
