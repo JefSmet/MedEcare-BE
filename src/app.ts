@@ -33,6 +33,8 @@ import userConstraintRoutes from "./routes/user-constraint-routes";
 // Swagger UI imports
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger";
+import { setupSwagger } from "./config/swagger";
+
 
 // 1. Load environment variables
 loadEnv();
@@ -79,12 +81,13 @@ app.use("/admin/activities", activityRoutes);
 app.use("/admin/user-constraints", userConstraintRoutes);
 
 // 9. Swagger UI route (with customSiteTitle)
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, {
-    customSiteTitle: "MedEcare Docs", // <-- This changes the browser tab title
-  })
-);
+// app.use(
+//   "/api-docs",
+//   swaggerUi.serve,
+//   swaggerUi.setup(swaggerSpec, {
+//     customSiteTitle: "MedEcare Docs", // <-- This changes the browser tab title
+//   })
+// );
+setupSwagger(app);
 
 export default app;

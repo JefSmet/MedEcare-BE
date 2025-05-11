@@ -1,21 +1,17 @@
 /**
  * @description
- * This file configures swagger-jsdoc to generate the OpenAPI specification and
- * sets up Swagger UI for the MedEcare-BE application.
- *
- * Key points:
- * - Sets the OpenAPI version to 3.0.0
- * - Defines API metadata (title, version, description)
- * - Uses CookieAuth (apiKey in cookie) for JWT via HttpOnly cookies
- * - Enables Swagger UI to include cookies in requests via requestInterceptor
- * - Exported function `setupSwagger` mounts the UI at `/api-docs`
+ * Generates the OpenAPI spec and mounts Swagger UI
+ * so that HttpOnly cookies (accessToken) are included in every call.
  */
 
-import express from 'express';
 import path from 'path';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import express, { Request, Response } from 'express';
 
+/* ------------------------------------------------------------------ */
+/* 1. Spec generation (ongewijzigd)                                   */
+/* ------------------------------------------------------------------ */
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -33,11 +29,7 @@ const options = {
         },
       },
     },
-    security: [
-      {
-        CookieAuth: [],
-      },
-    ],
+    security: [{ CookieAuth: [] }],
   },
   apis: [
     path.join(__dirname, '../routes/*.ts'),
@@ -47,23 +39,35 @@ const options = {
 
 const swaggerSpec = swaggerJsdoc(options);
 
-/**
- * Mounts Swagger UI at /api-docs
- * @param app Express application instance
- */
-export default function setupSwagger(app: express.Express) {
+/* ------------------------------------------------------------------ */
+/* 2. Helper om Swagger UI te mounten mét cookie-support              */
+/* ------------------------------------------------------------------ */
+export function setupSwagger(app: express.Express): void {
+  // (optioneel) ruwe JSON spec voor debug
+  app.get('/api-docs.json', (_req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
+
+  // interactieve UI
   app.use(
     '/api-docs',
     swaggerUi.serve,
+    // cast naar RequestHandler voorkomt TS-overload-error
     swaggerUi.setup(swaggerSpec, {
       customSiteTitle: 'MedEcare Docs',
       swaggerOptions: {
-        // Include HttpOnly cookies (e.g. accessToken) in UI requests
+        // <-- dit voegt credentials: 'include' toe aan elke fetch van de UI
         requestInterceptor: (req: any) => {
           req.credentials = 'include';
           return req;
         },
       },
-    }),
+    }) as express.RequestHandler,
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* 3. (optioneel) plain export van de spec als je die elders nodig hebt */
+/* ------------------------------------------------------------------ */
+export default swaggerSpec;
