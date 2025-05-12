@@ -57,6 +57,7 @@ export function setupSwagger(app: express.Express): void {
     // cast naar RequestHandler voorkomt TS-overload-error
     swaggerUi.setup(swaggerSpec, {
       customSiteTitle: 'MedEcare Docs',
+      customCss: '.swagger-ui .auth-wrapper { display: none !important; }',
       swaggerOptions: {
         // <-- dit voegt credentials: 'include' toe aan elke fetch van de UI
         requestInterceptor: (req: any) => {
