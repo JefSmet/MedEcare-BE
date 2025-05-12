@@ -22,15 +22,8 @@
  * - We flatten user roles into user.roles in the passport strategies.
  */
 
-import { PrismaClient, Role, User, UserRole, Person } from '@prisma/client';
+import { Person, PrismaClient, User } from '@prisma/client';
 import bcrypt from 'bcrypt';
-
-// Define the UserWithRoles interface to extend User
-interface UserWithRoles extends User {
-  userRoles: (UserRole & { role: Role })[];
-  roles: string[]; // Array of role names
-  person: Person; // Include the Person record if needed
-}
 
 const prisma = new PrismaClient();
 
@@ -149,7 +142,9 @@ export async function findByResetToken(token: string): Promise<User | null> {
   }
 }
 
-export async function findById(id: string): Promise<UserWithRoles | null> {
+export async function findById(
+  id: string,
+): Promise<(User & { roles: string[]; person: Person }) | null> {
   const user = await prisma.user.findUnique({
     where: { personId: id },
     include: {
@@ -164,15 +159,36 @@ export async function findById(id: string): Promise<UserWithRoles | null> {
 
   if (!user) return null;
 
-  // Eventueel 'roles' toevoegen net zoals in passport
-  const userWithRoles = user as UserWithRoles;
-  userWithRoles.roles = userWithRoles.userRoles.map((ur) => ur.role.name);
-  return userWithRoles;
+  // Add roles array to user object
+  return {
+    ...user,
+    roles: user.userRoles.map((ur) => ur.role.name),
+  };
 }
 
 export async function findAllUsers(): Promise<User[]> {
   try {
     const users = await prisma.user.findMany();
+    return users;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * @function findAllUsersWithPersonDetails
+ * @description Retrieves all users with their associated person details
+ * @returns Promise with array of users including person details
+ */
+export async function findAllUsersWithPersonDetails(): Promise<
+  (User & { person: Person })[]
+> {
+  try {
+    const users = await prisma.user.findMany({
+      include: {
+        person: true,
+      },
+    });
     return users;
   } catch (error) {
     throw error;
@@ -215,6 +231,28 @@ export async function deleteUser(userId: string): Promise<User> {
     });
     return deleted;
   } catch (error: any) {
+    throw error;
+  }
+}
+
+/**
+ * @function findUserById
+ * @description Retrieves a single user by ID with their associated person details
+ * @param userId The ID of the user to retrieve
+ * @returns Promise with user including person details or null if not found
+ */
+export async function findUserById(
+  userId: string,
+): Promise<(User & { person: Person }) | null> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { personId: userId },
+      include: {
+        person: true,
+      },
+    });
+    return user;
+  } catch (error) {
     throw error;
   }
 }

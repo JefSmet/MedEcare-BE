@@ -48,6 +48,33 @@ const router = Router();
  *                   shiftTypeId:
  *                     type: string
  *                     nullable: true
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   person:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       firstName:
+ *                         type: string
+ *                       lastName:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                   shiftType:
+ *                     type: object
+ *                     nullable: true
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       color:
+ *                         type: string
  *   post:
  *     summary: Create a new activity
  *     tags: [Activity]
@@ -103,9 +130,59 @@ const router = Router();
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Activity'
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 activityType:
+ *                   type: string
+ *                 start:
+ *                   type: string
+ *                   format: date-time
+ *                 end:
+ *                   type: string
+ *                   format: date-time
+ *                 personId:
+ *                   type: string
+ *                 shiftTypeId:
+ *                   type: string
+ *                   nullable: true
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 person:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                 shiftType:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       name:
+ *                         type: string
+ *                       color:
+ *                         type: string
  *       404:
  *         description: Activity not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *   put:
  *     summary: Update an existing activity
  *     tags: [Activity]
@@ -141,7 +218,29 @@ const router = Router();
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Activity'
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 activityType:
+ *                   type: string
+ *                 start:
+ *                   type: string
+ *                   format: date-time
+ *                 end:
+ *                   type: string
+ *                   format: date-time
+ *                 personId:
+ *                   type: string
+ *                 shiftTypeId:
+ *                   type: string
+ *                   nullable: true
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
  *       404:
  *         description: Activity not found
  *   delete:

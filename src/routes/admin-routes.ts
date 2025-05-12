@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createNewUser,
   deleteExistingUser,
+  getUserById,
   listUsers,
   updateExistingUser,
 } from '../controllers/admin-controller';
@@ -28,16 +29,37 @@ const router = Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 users:
- *                   type: array
- *                   items:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   personId:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   person:
  *                     type: object
  *                     properties:
- *                       personId:
+ *                       id:
  *                         type: string
- *                       email:
+ *                       firstName:
+ *                         type: string
+ *                       lastName:
+ *                         type: string
+ *                       dateOfBirth:
+ *                         type: string
+ *                         format: date
+ *                       phoneNumber:
+ *                         type: string
+ *                       address:
+ *                         type: string
+ *                       gender:
  *                         type: string
  *                       createdAt:
  *                         type: string
@@ -89,6 +111,61 @@ const router = Router();
  *                       type: string
  *
  * /admin/users/{id}:
+ *   get:
+ *     summary: Retrieve a single user by ID
+ *     tags: [Admin]
+ *     security:
+ *       - CookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 personId:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 person:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     dateOfBirth:
+ *                       type: string
+ *                       format: date
+ *                     phoneNumber:
+ *                       type: string
+ *                     address:
+ *                       type: string
+ *                     gender:
+ *                       type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *       404:
+ *         description: User not found
  *   put:
  *     summary: Update an existing user
  *     tags: [Admin]
@@ -162,6 +239,7 @@ const router = Router();
  *         description: User not found
  */
 router.get('/users', jwtAuth, requireAdmin, listUsers);
+router.get('/users/:id', jwtAuth, requireAdmin, getUserById);
 router.post('/users', jwtAuth, requireAdmin, createNewUser);
 router.put('/users/:id', jwtAuth, requireAdmin, updateExistingUser);
 router.delete('/users/:id', jwtAuth, requireAdmin, deleteExistingUser);
