@@ -1,0 +1,305 @@
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Person:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         firstName:
+ *           type: string
+ *         lastName:
+ *           type: string
+ *         dateOfBirth:
+ *           type: string
+ *           format: date
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         user:
+ *           type: object
+ *           nullable: true
+ *           properties:
+ *             personId:
+ *               type: string
+ *             email:
+ *               type: string
+ *         activities:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Activity'
+ *         userConstraints:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/UserConstraint'
+ *
+ *     User:
+ *       type: object
+ *       properties:
+ *         personId:
+ *           type: string
+ *         email:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         person:
+ *           $ref: '#/components/schemas/Person'
+ *         userRoles:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               roleId:
+ *                 type: string
+ *               role:
+ *                 $ref: '#/components/schemas/Role'
+ *
+ *     Role:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *
+ *     Activity:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         activityType:
+ *           type: string
+ *         start:
+ *           type: string
+ *           format: date-time
+ *         end:
+ *           type: string
+ *           format: date-time
+ *         personId:
+ *           type: string
+ *         shiftTypeId:
+ *           type: string
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         person:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *             firstName:
+ *               type: string
+ *             lastName:
+ *               type: string
+ *         shiftType:
+ *           type: object
+ *           nullable: true
+ *           properties:
+ *             id:
+ *               type: string
+ *             name:
+ *               type: string
+ *             startHour:
+ *               type: integer
+ *             startMinute:
+ *               type: integer
+ *             durationMinutes:
+ *               type: integer
+ *
+ *     ShiftType:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         startHour:
+ *           type: integer
+ *         startMinute:
+ *           type: integer
+ *         durationMinutes:
+ *           type: integer
+ *         activeFrom:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         activeUntil:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         rates:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/ShiftTypeRate'
+ *
+ *     ShiftTypeRate:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         shiftTypeId:
+ *           type: string
+ *         rate:
+ *           type: number
+ *           format: float
+ *         validFrom:
+ *           type: string
+ *           format: date-time
+ *         validUntil:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     UserConstraint:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         personId:
+ *           type: string
+ *         maxNightShiftsPerWeek:
+ *           type: integer
+ *           nullable: true
+ *         maxConsecutiveNightShifts:
+ *           type: integer
+ *           nullable: true
+ *         minRestHoursBetweenShifts:
+ *           type: integer
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         person:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *             firstName:
+ *               type: string
+ *             lastName:
+ *               type: string
+ *
+ *     AdminPersonResponse:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         firstName:
+ *           type: string
+ *         lastName:
+ *           type: string
+ *         dateOfBirth:
+ *           type: string
+ *           format: date
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     AdminUserResponse:
+ *       type: object
+ *       properties:
+ *         personId:
+ *           type: string
+ *         email:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         person:
+ *           $ref: '#/components/schemas/AdminPersonResponse'
+ *
+ *     SimplePersonResponse:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         firstName:
+ *           type: string
+ *         lastName:
+ *           type: string
+ *         dateOfBirth:
+ *           type: string
+ *           format: date
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *   responses:
+ *     NotFound:
+ *       description: The specified resource was not found
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               error:
+ *                 type: string
+ *
+ *     ValidationError:
+ *       description: Request validation error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               error:
+ *                 type: string
+ *
+ *     Unauthorized:
+ *       description: Authentication information is missing or invalid
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               error:
+ *                 type: string
+ *
+ *     Forbidden:
+ *       description: Access to the requested resource is forbidden
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               error:
+ *                 type: string
+ */

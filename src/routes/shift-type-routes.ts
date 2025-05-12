@@ -31,26 +31,7 @@ const router = Router();
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                   name:
- *                     type: string
- *                   startHour:
- *                     type: integer
- *                   startMinute:
- *                     type: integer
- *                   durationMinutes:
- *                     type: integer
- *                   activeFrom:
- *                     type: string
- *                     format: date-time
- *                     nullable: true
- *                   activeUntil:
- *                     type: string
- *                     format: date-time
- *                     nullable: true
+ *                 $ref: '#/components/schemas/ShiftType'
  *   post:
  *     summary: Create a new shift type
  *     tags: [ShiftType]
@@ -110,7 +91,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ShiftType'
  *       404:
- *         description: Not found
+ *         description: Shift type not found
  *   put:
  *     summary: Update a shift type
  *     tags: [ShiftType]
@@ -123,7 +104,6 @@ const router = Router();
  *         schema:
  *           type: string
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -145,13 +125,13 @@ const router = Router();
  *                 format: date-time
  *     responses:
  *       200:
- *         description: Updated shift type
+ *         description: The updated shift type
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ShiftType'
  *       404:
- *         description: Not found
+ *         description: Shift type not found
  *   delete:
  *     summary: Delete a shift type
  *     tags: [ShiftType]
@@ -165,7 +145,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion completed
+ *         description: Delete successful
  *         content:
  *           application/json:
  *             schema:
@@ -174,7 +154,7 @@ const router = Router();
  *                 message:
  *                   type: string
  *       404:
- *         description: Not found
+ *         description: Shift type not found
  */
 router.get('/', jwtAuth, requireAdmin, listShiftTypes);
 router.post('/', jwtAuth, requireAdmin, createShiftType);

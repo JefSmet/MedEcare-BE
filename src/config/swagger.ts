@@ -4,10 +4,10 @@
  * so that HttpOnly cookies (accessToken) are included in every call.
  */
 
+import express, { Request, Response } from 'express';
 import path from 'path';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import express, { Request, Response } from 'express';
 
 /* ------------------------------------------------------------------ */
 /* 1. Spec generation (ongewijzigd)                                   */
@@ -32,6 +32,7 @@ const options = {
     security: [{ CookieAuth: [] }],
   },
   apis: [
+    path.join(__dirname, '../routes/schema-components.ts'),
     path.join(__dirname, '../routes/*.ts'),
     path.join(__dirname, '../controllers/*.ts'),
   ],

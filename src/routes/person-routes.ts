@@ -31,23 +31,7 @@ const router = Router();
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                   firstName:
- *                     type: string
- *                   lastName:
- *                     type: string
- *                   dateOfBirth:
- *                     type: string
- *                     format: date
- *                   createdAt:
- *                     type: string
- *                     format: date-time
- *                   updatedAt:
- *                     type: string
- *                     format: date-time
+ *                 $ref: '#/components/schemas/SimplePersonResponse'
  *   post:
  *     summary: Create a new person
  *     tags: [Person]
@@ -77,7 +61,23 @@ const router = Router();
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Person'
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 firstName:
+ *                   type: string
+ *                 lastName:
+ *                   type: string
+ *                 dateOfBirth:
+ *                   type: string
+ *                   format: date
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
  *
  * /admin/persons/{id}:
  *   get:
@@ -99,7 +99,11 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Person'
  *       404:
- *         description: Not found
+ *         $ref: '#/components/responses/NotFound'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *   put:
  *     summary: Update a person
  *     tags: [Person]

@@ -31,21 +31,7 @@ const router = Router();
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                   shiftTypeId:
- *                     type: string
- *                   rate:
- *                     type: number
- *                   validFrom:
- *                     type: string
- *                     format: date-time
- *                   validUntil:
- *                     type: string
- *                     format: date-time
- *                     nullable: true
+ *                 $ref: '#/components/schemas/ShiftTypeRate'
  *   post:
  *     summary: Create a new shift-type rate
  *     tags: [ShiftTypeRate]
@@ -100,9 +86,9 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ShiftTypeRate'
  *       404:
- *         description: Not found
+ *         description: Shift-type rate not found
  *   put:
- *     summary: Update an existing shift-type rate
+ *     summary: Update a shift-type rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -130,13 +116,13 @@ const router = Router();
  *                 format: date-time
  *     responses:
  *       200:
- *         description: Updated rate record
+ *         description: The updated rate
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ShiftTypeRate'
  *       404:
- *         description: Not found
+ *         description: Shift-type rate not found
  *   delete:
  *     summary: Delete a shift-type rate
  *     tags: [ShiftTypeRate]
@@ -150,7 +136,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion successful
+ *         description: Delete successful
  *         content:
  *           application/json:
  *             schema:
@@ -159,7 +145,7 @@ const router = Router();
  *                 message:
  *                   type: string
  *       404:
- *         description: Not found
+ *         description: Shift-type rate not found
  */
 router.get('/', jwtAuth, requireAdmin, listShiftTypeRates);
 router.post('/', jwtAuth, requireAdmin, createShiftTypeRate);

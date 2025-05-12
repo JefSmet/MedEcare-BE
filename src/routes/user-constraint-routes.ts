@@ -31,21 +31,7 @@ const router = Router();
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                   personId:
- *                     type: string
- *                   maxNightShiftsPerWeek:
- *                     type: integer
- *                     nullable: true
- *                   maxConsecutiveNightShifts:
- *                     type: integer
- *                     nullable: true
- *                   minRestHoursBetweenShifts:
- *                     type: integer
- *                     nullable: true
+ *                 $ref: '#/components/schemas/UserConstraint'
  *   post:
  *     summary: Create a new user constraint
  *     tags: [UserConstraint]
@@ -124,7 +110,7 @@ const router = Router();
  *                 type: integer
  *     responses:
  *       200:
- *         description: Updated constraint
+ *         description: The updated constraint
  *         content:
  *           application/json:
  *             schema:
@@ -144,7 +130,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Constraint deleted
+ *         description: Deletion successful
  *         content:
  *           application/json:
  *             schema:

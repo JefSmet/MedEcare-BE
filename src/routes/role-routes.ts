@@ -31,12 +31,7 @@ const router = Router();
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                   name:
- *                     type: string
+ *                 $ref: '#/components/schemas/Role'
  *   post:
  *     summary: Create a new role
  *     tags: [Role]
@@ -99,8 +94,6 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - name
  *             properties:
  *               name:
  *                 type: string
@@ -126,7 +119,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion successful
+ *         description: Deletion completed
  *         content:
  *           application/json:
  *             schema:
@@ -135,11 +128,11 @@ const router = Router();
  *                 message:
  *                   type: string
  *       404:
- *         description: Not found
+ *         description: Role not found
  */
 router.get('/', jwtAuth, requireAdmin, listRoles);
-router.post('/', jwtAuth, requireAdmin, createRole);
 router.get('/:id', jwtAuth, requireAdmin, getRoleById);
+router.post('/', jwtAuth, requireAdmin, createRole);
 router.put('/:id', jwtAuth, requireAdmin, updateRole);
 router.delete('/:id', jwtAuth, requireAdmin, deleteRole);
 

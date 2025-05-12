@@ -26,9 +26,9 @@ export async function listPersons(req: Request, res: Response, next: NextFunctio
   try {
     const persons = await prisma.person.findMany({
       include: {
-        user: true,
-        activities: true,
-        userConstraints: true,
+        user: false,
+        activities: false,
+        userConstraints: false,
       },
     });
     res.json(persons);

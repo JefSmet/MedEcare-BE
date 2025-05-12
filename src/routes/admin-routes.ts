@@ -31,42 +31,7 @@ const router = Router();
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   personId:
- *                     type: string
- *                   email:
- *                     type: string
- *                   createdAt:
- *                     type: string
- *                     format: date-time
- *                   updatedAt:
- *                     type: string
- *                     format: date-time
- *                   person:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       firstName:
- *                         type: string
- *                       lastName:
- *                         type: string
- *                       dateOfBirth:
- *                         type: string
- *                         format: date
- *                       phoneNumber:
- *                         type: string
- *                       address:
- *                         type: string
- *                       gender:
- *                         type: string
- *                       createdAt:
- *                         type: string
- *                         format: date-time
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
+ *                 $ref: '#/components/schemas/AdminUserResponse'
  *   post:
  *     summary: Create a new user
  *     tags: [Admin]
@@ -128,42 +93,7 @@ const router = Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 personId:
- *                   type: string
- *                 email:
- *                   type: string
- *                 createdAt:
- *                   type: string
- *                   format: date-time
- *                 updatedAt:
- *                   type: string
- *                   format: date-time
- *                 person:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                     firstName:
- *                       type: string
- *                     lastName:
- *                       type: string
- *                     dateOfBirth:
- *                       type: string
- *                       format: date
- *                     phoneNumber:
- *                       type: string
- *                     address:
- *                       type: string
- *                     gender:
- *                       type: string
- *                     createdAt:
- *                       type: string
- *                       format: date-time
- *                     updatedAt:
- *                       type: string
- *                       format: date-time
+ *               $ref: '#/components/schemas/AdminUserResponse'
  *       404:
  *         description: User not found
  *   put:
@@ -191,7 +121,7 @@ const router = Router();
  *                 type: string
  *     responses:
  *       200:
- *         description: User updated
+ *         description: The updated user
  *         content:
  *           application/json:
  *             schema:
