@@ -233,7 +233,7 @@ export async function refreshToken(
 
     const isProd = process.env.NODE_ENV === 'production';
     const accessMaxAge =
-      parseInt((process.env.ACCESS_TOKEN_EXPIRY || '1h').replace('h', ''), 10) *
+      parseInt((process.env.ACCESS_TOKEN_EXPIRY_WEB || '1h').replace('h', ''), 10) *60*
         60 *
         1000 || 3600000;
 
