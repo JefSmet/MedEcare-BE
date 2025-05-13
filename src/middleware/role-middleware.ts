@@ -19,7 +19,7 @@ import { RequestHandler } from 'express';
 export const requireAdmin: RequestHandler = (req, res, next) => {
   const user = req.user as { roles?: string[] } | undefined;
 
-  if (!user || !Array.isArray(user.roles) || !user.roles.includes('ADMIN')) {
+  if (!user || !Array.isArray(user.roles) || !user.roles.includes('admin')) {
     res.status(403).json({
       error: 'Forbidden. Admin access only.',
     });

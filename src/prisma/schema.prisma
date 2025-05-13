@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlserver"
+  provider = "sqlite"
   url      = env("DB_URL")
 }
 
@@ -12,7 +12,7 @@ generator client {
 ////////////////////////////////////////////////////////////////////////////////
 
 model Person {
-  id          String   @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
+  id          String   @id @default(uuid())
   firstName   String
   lastName    String
   dateOfBirth DateTime
@@ -30,7 +30,7 @@ model Person {
 }
 
 model User {
-  personId String @id @db.UniqueIdentifier
+  personId String @id
   email    String @unique
   password String
 
@@ -54,14 +54,14 @@ model User {
 ////////////////////////////////////////////////////////////////////////////////
 
 model Role {
-  id        String     @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
+  id        String     @id @default(uuid())
   name      String     @unique
   userRoles UserRole[]
 }
 
 model UserRole {
-  userId String @db.UniqueIdentifier
-  roleId String @db.UniqueIdentifier
+  userId String
+  roleId String
 
   user User @relation(fields: [userId], references: [personId])
   role Role @relation(fields: [roleId], references: [id])
@@ -74,9 +74,9 @@ model UserRole {
 ////////////////////////////////////////////////////////////////////////////////
 
 model RefreshToken {
-  id        String   @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
+  id        String   @id @default(uuid())
   token     String   @unique
-  userId    String   @db.UniqueIdentifier
+  userId    String
   user      User     @relation(fields: [userId], references: [personId])
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -87,7 +87,7 @@ model RefreshToken {
 ////////////////////////////////////////////////////////////////////////////////
 
 model ShiftType {
-  id   String @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
+  id   String @id @default(uuid())
   name String
 
   // Option A: only time & duration
@@ -110,8 +110,8 @@ model ShiftType {
 }
 
 model ShiftTypeRate {
-  id          String    @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
-  shiftTypeId String    @db.UniqueIdentifier
+  id          String    @id @default(uuid())
+  shiftTypeId String
   shiftType   ShiftType @relation(fields: [shiftTypeId], references: [id])
 
   rate       Float
@@ -127,18 +127,18 @@ model ShiftTypeRate {
 ////////////////////////////////////////////////////////////////////////////////
 
 model Activity {
-  id           String   @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
+  id           String   @id @default(uuid())
   activityType String // "SHIFT", "LEAVE", "CONFERENCE", etc.
   start        DateTime
   end          DateTime
   status       String   @default("SCHEDULED") // "SCHEDULED", "COMPLETED", "CANCELLED", etc.
 
   // Relation to the person (doctor/nurse/etc.)
-  personId String @db.UniqueIdentifier
+  personId String
   person   Person @relation(fields: [personId], references: [id])
 
   // Optional link to ShiftType (if this activity is a SHIFT)
-  shiftTypeId String?    @db.UniqueIdentifier
+  shiftTypeId String?
   shiftType   ShiftType? @relation(fields: [shiftTypeId], references: [id])
 
   createdAt DateTime @default(now())
@@ -150,8 +150,8 @@ model Activity {
 ////////////////////////////////////////////////////////////////////////////////
 
 model UserConstraint {
-  id       String @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
-  personId String @db.UniqueIdentifier
+  id       String @id @default(uuid())
+  personId String
   person   Person @relation(fields: [personId], references: [id])
 
   maxNightShiftsPerWeek     Int?

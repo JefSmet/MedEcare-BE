@@ -1,26 +1,23 @@
-// prisma/seed.ts
-//
-// In package.json:
-//   "prisma": { "seed": "ts-node prisma/seed.ts" }
+// prisma/seed-sqlite.ts
 //
 // Run:
-//   npx prisma db seed
+//   npx ts-node src/prisma/seed-sqlite.ts
 
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
+// Helper function to add days to a date
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
 async function main() {
   await prisma.$transaction(async (tx) => {
-    // Helper function to add days to a date
-    function addDays(date: Date, days: number): Date {
-      const result = new Date(date);
-      result.setDate(result.getDate() + days);
-      return result;
-    }
-    
     // Current date in demo format
     const today = new Date('2025-05-13T00:00:00.000Z');
-
+    
     /* ------------------------------------------------------------------ *
      * 1. Persons                                                          *
      * ------------------------------------------------------------------ */
@@ -65,79 +62,17 @@ async function main() {
         createdAt: new Date('2025-04-28T20:18:07.040Z'),
         updatedAt: new Date('2025-04-28T20:18:07.040Z'),
       },
-      {
-        id: 'D722AB12-7D5B-4A12-989B-7DC23046822F',
-        firstName: 'Koen',
-        lastName: 'Hezemans',
-        dateOfBirth: new Date('1990-06-19'),
-        createdAt: new Date('2025-04-28T20:18:07.040Z'),
-        updatedAt: new Date('2025-04-28T20:18:07.040Z'),
-      },
-      {
-        id: 'C9E423E0-CE00-4CFA-8DCA-836010BE0EEA',
-        firstName: 'Nathan',
-        lastName: 'Van Hoeck',
-        dateOfBirth: new Date('1991-06-20'),
-        createdAt: new Date('2025-04-28T20:18:07.040Z'),
-        updatedAt: new Date('2025-04-28T20:18:07.040Z'),
-      },
-      {
-        id: 'C0255E85-86FA-478F-816E-C50C364D367F',
-        firstName: 'Daphnée',
-        lastName: 'Demaeght',
-        dateOfBirth: new Date('1988-05-17'),
-        createdAt: new Date('2025-04-28T20:18:07.040Z'),
-        updatedAt: new Date('2025-04-28T20:18:07.040Z'),
-      },
-      {
-        id: '234A95AC-713D-4B84-9702-D68D3E6D6E2B',
-        firstName: 'Lennert',
-        lastName: 'Poppeliers',
-        dateOfBirth: new Date('1987-02-17'),
-        createdAt: new Date('2025-04-28T20:18:07.040Z'),
-        updatedAt: new Date('2025-04-28T20:18:07.040Z'),
-      },
-      {
-        id: '3BE470D8-74B3-4C01-9E4F-EAE069F26B0A',
-        firstName: 'Jef',
-        lastName: 'Smet',
-        dateOfBirth: new Date('2000-08-04'),
-        createdAt: new Date('2025-04-28T13:31:02.392Z'),
-        updatedAt: new Date('2025-04-28T13:31:02.392Z'),
-      },
-      {
-        id: '6E7431EA-3439-408D-A514-EC9723204771',
-        firstName: 'Goswin',
-        lastName: 'Onsia',
-        dateOfBirth: new Date('1989-08-03'),
-        createdAt: new Date('2025-04-28T20:18:07.040Z'),
-        updatedAt: new Date('2025-04-28T20:18:07.040Z'),
-      },
-      {
-        id: 'C947B64E-E08D-4B0B-8827-F12C09C2469E',
-        firstName: 'Evi',
-        lastName: 'Van Den Kerckhove',
-        dateOfBirth: new Date('1987-04-27'),
-        createdAt: new Date('2025-04-28T20:18:07.040Z'),
-        updatedAt: new Date('2025-04-28T20:18:07.040Z'),
-      },
-      {
-        id: '2DD622E3-8DC0-4252-82D9-F39B5F93D0C2',
-        firstName: 'Mark',
-        lastName: 'Timmermans',
-        dateOfBirth: new Date('1972-04-25'),
-        createdAt: new Date('2025-04-28T20:18:07.040Z'),
-        updatedAt: new Date('2025-04-28T20:18:07.040Z'),
-      },
     ]
 
     for (const p of persons) {
       await tx.person.upsert({
         where: { id: p.id },
-        update: { dateOfBirth: p.dateOfBirth },
+        update: {},
         create: p,
       })
-    }    /* ------------------------------------------------------------------ *
+    }
+
+    /* ------------------------------------------------------------------ *
      * 2. Roles                                                           *
      * ------------------------------------------------------------------ */
     const roles = [
@@ -154,7 +89,7 @@ async function main() {
     }
     
     /* ------------------------------------------------------------------ *
-     * 2.1 Users                                                          *
+     * 3. Users                                                          *
      * ------------------------------------------------------------------ */    const users = [
       {
         personId: '414756FA-F4A9-4908-B8AB-42982697585E', // Filip Smet
@@ -188,7 +123,7 @@ async function main() {
     }
     
     /* ------------------------------------------------------------------ *
-     * 2.2 UserRoles                                                      *
+     * 4. UserRoles                                                      *
      * ------------------------------------------------------------------ */
     const userRoles = [
       {
@@ -216,8 +151,10 @@ async function main() {
         update: {},
         create: ur,
       })
-    }/* ------------------------------------------------------------------ *
-     * 3. ShiftTypes                                                      *
+    }
+
+    /* ------------------------------------------------------------------ *
+     * 5. ShiftTypes                                                      *
      * ------------------------------------------------------------------ */
     const shiftTypes = [
       {
@@ -264,7 +201,7 @@ async function main() {
     }
     
     /* ------------------------------------------------------------------ *
-     * 4. ShiftTypeRates                                                  *
+     * 6. ShiftTypeRates                                                  *
      * ------------------------------------------------------------------ */
     const shiftTypeRates = [
       {
@@ -294,7 +231,9 @@ async function main() {
         createdAt: new Date('2025-04-28T20:10:38.627Z'),
         updatedAt: new Date('2025-04-28T20:10:38.627Z'),
       },
-    ]    for (const r of shiftTypeRates) {
+    ]
+
+    for (const r of shiftTypeRates) {
       await tx.shiftTypeRate.upsert({
         where: { id: r.id },
         update: {},
@@ -303,22 +242,11 @@ async function main() {
     }
     
     /* ------------------------------------------------------------------ *
-     * 5. Activities (Shifts & Leave)                                     *
-     * ------------------------------------------------------------------ */
-    // Helper function to add days to a date
-    function addDays(date: Date, days: number): Date {
-      const result = new Date(date);
-      result.setDate(result.getDate() + days);
-      return result;
-    }
-    
-    // Current date in demo format
-    const today = new Date('2025-05-13T00:00:00.000Z');
-    
-    const activities = [
+     * 7. Activities (Shifts & Leave)                                     *
+     * ------------------------------------------------------------------ */    const activities = [
       // Filip Smet shifts
       {
-        id: 'A1B2C3D4-E5F6-4A5B-8C9D-7E8F9G0H1I2J',
+        id: 'A1B2C3D4-E5F6-4A5B-8C9D-7E8F900H1I2J',
         activityType: 'SHIFT',
         start: addDays(today, 0),
         end: addDays(today, 1),
@@ -329,7 +257,7 @@ async function main() {
         updatedAt: new Date('2025-05-01T20:00:00.000Z'),
       },
       {
-        id: 'B2C3D4E5-F6G7-5B6C-9D0E-8F9G0H1I2J3K',
+        id: 'B2C3D4E5-F6G7-5B6C-9D0E-8F9000H1I2J3K',
         activityType: 'SHIFT',
         start: addDays(today, 2),
         end: addDays(today, 3),
@@ -342,7 +270,7 @@ async function main() {
       
       // Isabeau Verbelen shifts
       {
-        id: 'C3D4E5F6-G7H8-6C7D-0E1F-9G0H1I2J3K4L',
+        id: 'C3D4E5F6-G7H8-6C7D-0E1F-900H1I2J3K4L',
         activityType: 'SHIFT',
         start: addDays(today, 0),
         end: addDays(today, 1),
@@ -353,7 +281,7 @@ async function main() {
         updatedAt: new Date('2025-05-01T20:00:00.000Z'),
       },
       {
-        id: 'D4E5F6G7-H8I9-7D8E-1F2G-0H1I2J3K4L5M',
+        id: 'D4E5F6G7-H8I9-7D8E-1F2G-00H1I2J3K4L5M',
         activityType: 'SHIFT',
         start: addDays(today, 3),
         end: addDays(today, 4),
@@ -366,7 +294,7 @@ async function main() {
       
       // Annemie Van Ingelgem shifts and leave
       {
-        id: 'E5F6G7H8-I9J0-8E9F-2G3H-1I2J3K4L5M6N',
+        id: 'E5F6G7H8-I9J0-8E9F-2G3H-1I002J3K4L5M6N',
         activityType: 'SHIFT',
         start: addDays(today, 1),
         end: addDays(today, 2),
@@ -377,7 +305,7 @@ async function main() {
         updatedAt: new Date('2025-05-01T20:00:00.000Z'),
       },
       {
-        id: 'F6G7H8I9-J0K1-9F0G-3H4I-2J3K4L5M6N7O',
+        id: 'F6G7H8I9-J0K1-9F0G-3H4I-2J00K4L5M6N7O',
         activityType: 'LEAVE',
         start: addDays(today, 7),
         end: addDays(today, 14),
@@ -390,149 +318,7 @@ async function main() {
       
       // Bert Peeters
       {
-        id: 'G7H8I9J0-K1L2-0G1H-4I5J-3K4L5M6N7O8P',
-        activityType: 'SHIFT',
-        start: addDays(today, 0),
-        end: addDays(today, 1),
-        status: 'SCHEDULED',
-        personId: '37CFACDB-DD29-4125-BCD8-4E8F519D433E',
-        shiftTypeId: '2A86B3C0-BA35-487C-B07B-EB3F72C5AD85', // arts3
-        createdAt: new Date('2025-05-01T20:00:00.000Z'),
-        updatedAt: new Date('2025-05-01T20:00:00.000Z'),
-      }
-    ]
-    
-    for (const a of activities) {
-      await tx.activity.upsert({
-        where: { id: a.id },
-        update: {},
-        create: a,
-      })
-    }
-    
-    /* ------------------------------------------------------------------ *
-     * 6. User Constraints                                                *
-     * ------------------------------------------------------------------ */
-    const userConstraints = [
-      {
-        id: 'H8I9J0K1-L2M3-1H2I-5J6K-4L5M6N7O8P9Q',
-        personId: '414756FA-F4A9-4908-B8AB-42982697585E', // Filip Smet
-        maxNightShiftsPerWeek: 2,
-        maxConsecutiveNightShifts: 3,
-        minRestHoursBetweenShifts: 12,
-        createdAt: new Date('2025-05-01T20:00:00.000Z'),
-        updatedAt: new Date('2025-05-01T20:00:00.000Z'),
-      },
-      {
-        id: 'I9J0K1L2-M3N4-2I3J-6K7L-5M6N7O8P9Q0R',
-        personId: 'C1335314-ABDE-47E9-A6E3-1E1D120D7B04', // Isabeau Verbelen
-        maxNightShiftsPerWeek: 3,
-        maxConsecutiveNightShifts: 4,
-        minRestHoursBetweenShifts: 10,
-        createdAt: new Date('2025-05-01T20:00:00.000Z'),
-        updatedAt: new Date('2025-05-01T20:00:00.000Z'),
-      }
-    ]
-    
-    for (const uc of userConstraints) {
-      await tx.userConstraint.upsert({
-        where: { id: uc.id },
-        update: {},
-        create: uc,
-      })
-    }
-    
-    /* ------------------------------------------------------------------ *
-     * 5. Activities (Shifts & Leave)                                     *
-     * ------------------------------------------------------------------ */
-    // Helper function to add days to a date
-    function addDays(date: Date, days: number): Date {
-      const result = new Date(date);
-      result.setDate(result.getDate() + days);
-      return result;
-    }
-    
-    // Current date in demo format
-    const today = new Date('2025-05-13T00:00:00.000Z');
-    const tomorrow = addDays(today, 1);
-    const nextWeek = addDays(today, 7);
-    
-    const activities = [
-      // Filip Smet shifts
-      {
-        id: 'A1B2C3D4-E5F6-4A5B-8C9D-7E8F9G0H1I2J',
-        activityType: 'SHIFT',
-        start: addDays(today, 0),
-        end: addDays(today, 1),
-        status: 'SCHEDULED',
-        personId: '414756FA-F4A9-4908-B8AB-42982697585E',
-        shiftTypeId: 'C39ED775-592E-47BA-BCAD-87A08D9D554E', // dag
-        createdAt: new Date('2025-05-01T20:00:00.000Z'),
-        updatedAt: new Date('2025-05-01T20:00:00.000Z'),
-      },
-      {
-        id: 'B2C3D4E5-F6G7-5B6C-9D0E-8F9G0H1I2J3K',
-        activityType: 'SHIFT',
-        start: addDays(today, 2),
-        end: addDays(today, 3),
-        status: 'SCHEDULED',
-        personId: '414756FA-F4A9-4908-B8AB-42982697585E',
-        shiftTypeId: 'C39ED775-592E-47BA-BCAD-87A08D9D554E', // dag
-        createdAt: new Date('2025-05-01T20:00:00.000Z'),
-        updatedAt: new Date('2025-05-01T20:00:00.000Z'),
-      },
-      
-      // Isabeau Verbelen shifts
-      {
-        id: 'C3D4E5F6-G7H8-6C7D-0E1F-9G0H1I2J3K4L',
-        activityType: 'SHIFT',
-        start: addDays(today, 0),
-        end: addDays(today, 1),
-        status: 'SCHEDULED',
-        personId: 'C1335314-ABDE-47E9-A6E3-1E1D120D7B04',
-        shiftTypeId: '5192843E-DA72-4A5D-BB66-664716351EA9', // nacht
-        createdAt: new Date('2025-05-01T20:00:00.000Z'),
-        updatedAt: new Date('2025-05-01T20:00:00.000Z'),
-      },
-      {
-        id: 'D4E5F6G7-H8I9-7D8E-1F2G-0H1I2J3K4L5M',
-        activityType: 'SHIFT',
-        start: addDays(today, 3),
-        end: addDays(today, 4),
-        status: 'SCHEDULED',
-        personId: 'C1335314-ABDE-47E9-A6E3-1E1D120D7B04',
-        shiftTypeId: '5192843E-DA72-4A5D-BB66-664716351EA9', // nacht
-        createdAt: new Date('2025-05-01T20:00:00.000Z'),
-        updatedAt: new Date('2025-05-01T20:00:00.000Z'),
-      },
-      
-      // Annemie Van Ingelgem shifts and leave
-      {
-        id: 'E5F6G7H8-I9J0-8E9F-2G3H-1I2J3K4L5M6N',
-        activityType: 'SHIFT',
-        start: addDays(today, 1),
-        end: addDays(today, 2),
-        status: 'SCHEDULED',
-        personId: '05B2122D-009F-4B8F-B010-2C8E84F2651B',
-        shiftTypeId: '2A86B3C0-BA35-487C-B07B-EB3F72C5AD85', // arts3
-        createdAt: new Date('2025-05-01T20:00:00.000Z'),
-        updatedAt: new Date('2025-05-01T20:00:00.000Z'),
-      },
-      {
-        id: 'F6G7H8I9-J0K1-9F0G-3H4I-2J3K4L5M6N7O',
-        activityType: 'LEAVE',
-        start: addDays(today, 7),
-        end: addDays(today, 14),
-        status: 'APPROVED',
-        personId: '05B2122D-009F-4B8F-B010-2C8E84F2651B',
-        shiftTypeId: null,
-        createdAt: new Date('2025-05-01T20:00:00.000Z'),
-        updatedAt: new Date('2025-05-01T20:00:00.000Z'),
-      },
-      
-      // Bert Peeters
-      {
-        id: 'G7H8I9J0-K1L2-0G1H-4I5J-3K4L5M6N7O8P',
+        id: 'G7H8I9J0-K1L2-0G1H-4I5J-3K400M6N7O8P',
         activityType: 'SHIFT',
         start: addDays(today, 0),
         end: addDays(today, 1),
@@ -553,7 +339,7 @@ async function main() {
     }
     
     /* ------------------------------------------------------------------ *
-     * 6. User Constraints                                                *
+     * 8. User Constraints                                                *
      * ------------------------------------------------------------------ */
     const userConstraints = [
       {
@@ -585,7 +371,7 @@ async function main() {
     }
   })
 
-  console.log('✅  Database seeding completed.')
+  console.log('✅  SQLite database seeding completed.')
 }
 
 main()
