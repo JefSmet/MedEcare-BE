@@ -121,3 +121,45 @@ export async function deleteActivity(
     next(error);
   }
 }
+
+export async function filterActivities(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const year = parseInt(req.query.year as string, 10);
+    const month = parseInt(req.query.month as string, 10);
+    const activityType = req.query.activityType as string | undefined;
+
+    if (isNaN(year) || isNaN(month)) {
+      res
+        .status(400)
+        .json({ error: 'year and month are required and must be integers' });
+      return;
+    }
+
+    // Start and end of the month
+    const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+    const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+
+    const where: any = {
+      start: { gte: startDate },
+      end: { lte: endDate },
+    };
+    if (activityType) {
+      where.activityType = activityType;
+    }
+
+    const activities = await prisma.activity.findMany({
+      where,
+      include: {
+        person: true,
+        shiftType: true,
+      },
+    });
+    res.json(activities);
+  } catch (error) {
+    next(error);
+  }
+}
