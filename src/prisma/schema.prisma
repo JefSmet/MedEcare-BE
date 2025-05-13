@@ -128,16 +128,17 @@ model ShiftTypeRate {
 
 model Activity {
   id           String   @id @default(dbgenerated("newsequentialid()")) @db.UniqueIdentifier
-  activityType String   // "SHIFT", "LEAVE", "CONFERENCE", etc.
+  activityType String // "SHIFT", "LEAVE", "CONFERENCE", etc.
   start        DateTime
   end          DateTime
+  status       String   @default("SCHEDULED") // "SCHEDULED", "COMPLETED", "CANCELLED", etc.
 
   // Relation to the person (doctor/nurse/etc.)
   personId String @db.UniqueIdentifier
   person   Person @relation(fields: [personId], references: [id])
 
   // Optional link to ShiftType (if this activity is a SHIFT)
-  shiftTypeId String? @db.UniqueIdentifier
+  shiftTypeId String?    @db.UniqueIdentifier
   shiftType   ShiftType? @relation(fields: [shiftTypeId], references: [id])
 
   createdAt DateTime @default(now())

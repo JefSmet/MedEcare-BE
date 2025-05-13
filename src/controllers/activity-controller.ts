@@ -67,7 +67,8 @@ export async function createActivity(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const { activityType, start, end, personId, shiftTypeId } = req.body;
+    const { activityType, start, end, personId, shiftTypeId, status } =
+      req.body;
     const newActivity = await prisma.activity.create({
       data: {
         activityType,
@@ -75,6 +76,7 @@ export async function createActivity(
         end: new Date(end),
         personId,
         shiftTypeId,
+        status: status || 'SCHEDULED',
       },
     });
     res.status(201).json(newActivity);
@@ -90,7 +92,8 @@ export async function updateActivity(
 ): Promise<void> {
   try {
     const { id } = req.params;
-    const { activityType, start, end, personId, shiftTypeId } = req.body;
+    const { activityType, start, end, personId, shiftTypeId, status } =
+      req.body;
 
     const updated = await prisma.activity.update({
       where: { id },
@@ -100,6 +103,7 @@ export async function updateActivity(
         end: end ? new Date(end) : undefined,
         personId,
         shiftTypeId,
+        status,
       },
     });
     res.json(updated);

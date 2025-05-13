@@ -85,6 +85,9 @@
  *         end:
  *           type: string
  *           format: date-time
+ *         status:
+ *           type: string
+ *           description: Status of the activity (SCHEDULED, COMPLETED, CANCELLED, etc.)
  *         personId:
  *           type: string
  *         shiftTypeId:

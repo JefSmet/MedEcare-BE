@@ -18,6 +18,33 @@ const router = Router();
  *   name: Activity
  *   description: Endpoints for managing activities (shifts, leave, conferences, etc.)
  *
+ * components:
+ *   schemas:
+ *     ActivityRequestBody:
+ *       type: object
+ *       required:
+ *         - activityType
+ *         - start
+ *         - end
+ *         - personId
+ *       properties:
+ *         activityType:
+ *           type: string
+ *         start:
+ *           type: string
+ *           format: date-time
+ *         end:
+ *           type: string
+ *           format: date-time
+ *         personId:
+ *           type: string
+ *         shiftTypeId:
+ *           type: string
+ *         status:
+ *           type: string
+ *           description: Status of the activity (SCHEDULED, COMPLETED, CANCELLED, etc.)
+ *           default: SCHEDULED
+ *
  * /admin/activities:
  *   get:
  *     summary: List all activities
@@ -43,25 +70,7 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - activityType
- *               - start
- *               - end
- *               - personId
- *             properties:
- *               activityType:
- *                 type: string
- *               start:
- *                 type: string
- *                 format: date-time
- *               end:
- *                 type: string
- *                 format: date-time
- *               personId:
- *                 type: string
- *               shiftTypeId:
- *                 type: string
+ *             $ref: '#/components/schemas/ActivityRequestBody'
  *     responses:
  *       201:
  *         description: The newly created activity
@@ -113,20 +122,7 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               activityType:
- *                 type: string
- *               start:
- *                 type: string
- *                 format: date-time
- *               end:
- *                 type: string
- *                 format: date-time
- *               personId:
- *                 type: string
- *               shiftTypeId:
- *                 type: string
+ *             $ref: '#/components/schemas/ActivityRequestBody'
  *     responses:
  *       200:
  *         description: The updated activity
