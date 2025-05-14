@@ -157,3 +157,7 @@ Eerlijk zijn over de uren betekent meer.
 Maakt niet uit dat het minder uren zijn. Zolang ze representatief zijn van het geleverde werk.
 
 Geleverde werk moet natuurlijk in orde zijn XD.
+
+Roadmap maken van gedachtengang, hoe ben je tot dit gekomen, verderzeteen is een must (al is het gelogen)
+
+Uitbreidmogelijkheden aantonen en tot in een bepaald detail uitleggen.
