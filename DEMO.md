@@ -136,3 +136,24 @@ npx ts-node src/tests/test-detail-routes.ts
 ```
 
 Deze scripts zullen alle beschikbare routes testen en de resultaten tonen.
+
+
+
+
+Feedback:
+
+Back-end systemen meer blootleggen en testable laten blijken
+Ingezet op security -> 5 slides op security pen tests laten zien
+Alle dingen waar extra op ingezet VISUEEL laten zien
+Geen code tonen, enkel tenzij het niet anders kan!!
+UI mag iets beter was nog niet up to par maar dit wisten we.
+
+IK heb dit gedaan NIET zeggen show don't tell
+
+Per ding moeten kunnen zeggen hoe lang als de jury het kan in de helft van de tijd per definitie NIET geslaagd.
+
+Eerlijk zijn over de uren betekent meer.
+
+Maakt niet uit dat het minder uren zijn. Zolang ze representatief zijn van het geleverde werk.
+
+Geleverde werk moet natuurlijk in orde zijn XD.
