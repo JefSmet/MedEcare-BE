@@ -14,8 +14,8 @@ const router = Router();
 /**
  * @openapi
  * tags:
- *   name: Role
- *   description: Endpoints for managing roles
+ *   - name: Role
+ *     description: Endpoints for managing roles
  *
  * /admin/roles:
  *   get:

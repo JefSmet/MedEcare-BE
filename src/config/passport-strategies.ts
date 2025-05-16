@@ -4,26 +4,27 @@ import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import {
   Strategy as JwtStrategy,
+  ExtractJwt,
   StrategyOptions,
   VerifiedCallback,
 } from 'passport-jwt';
 import { Request } from 'express';
 
-/**
- * 1) AuthenticatedUser interface (our own “DTO” for the logged-in user)
- */
+/* ------------------------------------------------------------------ */
+/* 1. AuthenticatedUser DTO                                            */
+/* ------------------------------------------------------------------ */
 export interface AuthenticatedUser {
   personId: string;
   email: string;
   roles: string[];
   firstName: string;
   lastName: string;
-  dateOfBirth: Date; // Added
+  dateOfBirth: Date;
 }
 
-/**
- * 2) Helper function to map from a Prisma user to AuthenticatedUser
- */
+/* ------------------------------------------------------------------ */
+/* 2. Helper – Prisma-record ➜ DTO                                     */
+/* ------------------------------------------------------------------ */
 function toAuthenticatedUser(
   dbUser: User & {
     person: Person;
@@ -42,66 +43,56 @@ function toAuthenticatedUser(
 
 const prisma = new PrismaClient();
 
-/**
- * A) Local Strategy
- */
-const localOpts = {
-  usernameField: 'email',
-  passwordField: 'password',
-};
-
+/* ------------------------------------------------------------------ */
+/* 3. Local Strategy                                                   */
+/* ------------------------------------------------------------------ */
 passport.use(
-  new LocalStrategy(localOpts, async (email, password, done) => {
-    try {
-      // Fetch the user including person and roles from the DB
-      const dbUser = await prisma.user.findUnique({
-        where: { email },
-        include: {
-          person: true,
-          userRoles: { include: { role: true } },
-        },
-      });
-      if (!dbUser) {
-        return done(null, false, { message: 'Invalid credentials (user not found).' });
-      }
+  new LocalStrategy(
+    { usernameField: 'email', passwordField: 'password' },
+    async (email, password, done) => {
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { email },
+          include: {
+            person: true,
+            userRoles: { include: { role: true } },
+          },
+        });
+        if (!dbUser) {
+          return done(null, false, { message: 'Invalid credentials (user).' });
+        }
 
-      // Check password
-      const isMatch = await bcrypt.compare(password, dbUser.password);
-      if (!isMatch) {
-        return done(null, false, { message: 'Invalid credentials (password mismatch).' });
-      }
+        const isMatch = await bcrypt.compare(password, dbUser.password);
+        if (!isMatch) {
+          return done(null, false, { message: 'Invalid credentials (password).' });
+        }
 
-      // Map to AuthenticatedUser
-      const authUser = toAuthenticatedUser(dbUser);
-      return done(null, authUser);
-    } catch (err) {
-      return done(err);
-    }
-  }),
+        return done(null, toAuthenticatedUser(dbUser));
+      } catch (err) {
+        return done(err);
+      }
+    },
+  ),
 );
 
-/**
- * B) Cookie extractor for the JWT
- */
+/* ------------------------------------------------------------------ */
+/* 4. JWT Strategy – cookie OF Bearer                                  */
+/* ------------------------------------------------------------------ */
 function cookieExtractor(req: Request): string | null {
-  if (req && req.cookies && req.cookies.accessToken) {
-    return req.cookies.accessToken;
-  }
-  return null;
+  return req.cookies?.accessToken ?? null;
 }
 
-/**
- * C) JWT Strategy
- */
 const jwtOpts: StrategyOptions = {
-  jwtFromRequest: cookieExtractor,
+  jwtFromRequest: ExtractJwt.fromExtractors([
+    ExtractJwt.fromAuthHeaderAsBearerToken(), // FMX/mobile
+    cookieExtractor,                          // web
+  ]),
   secretOrKey: process.env.JWT_SECRET || 'changeme',
 };
 
 passport.use(
   new JwtStrategy(jwtOpts, async (payload: any, done: VerifiedCallback) => {
     try {
-      // Find by personId in payload
       const dbUser = await prisma.user.findUnique({
         where: { personId: payload.id },
         include: {
@@ -110,20 +101,18 @@ passport.use(
         },
       });
       if (!dbUser) {
-        return done(null, false, { message: 'Token invalid (no user)' });
+        return done(null, false, { message: 'Token invalid (user).' });
       }
-
-      const authUser = toAuthenticatedUser(dbUser);
-      return done(null, authUser);
-    } catch (error) {
-      return done(error, false);
+      return done(null, toAuthenticatedUser(dbUser));
+    } catch (err) {
+      return done(err, false);
     }
   }),
 );
 
-/**
- * D) initPassportStrategies() (optional)
- */
+/* ------------------------------------------------------------------ */
+/* 5. Optional init-export                                             */
+/* ------------------------------------------------------------------ */
 export function initPassportStrategies(): void {
-  // no-op
+  /* no-op – imported in app.ts */
 }

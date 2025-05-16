@@ -14,8 +14,8 @@ const router = Router();
 /**
  * @openapi
  * tags:
- *   name: ShiftTypeRate
- *   description: Endpoints for managing shift-type rates
+ *   - name: ShiftTypeRate
+ *     description: Endpoints for managing shift-type rates
  *
  * /admin/shift-type-rates:
  *   get:

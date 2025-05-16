@@ -14,8 +14,8 @@ const router = Router();
 /**
  * @openapi
  * tags:
- *   name: Person
- *   description: CRUD endpoints for Person entities
+ *   - name: Person
+ *     description: CRUD endpoints for Person entities
  *
  * /admin/persons:
  *   get:
@@ -61,23 +61,7 @@ const router = Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: string
- *                 firstName:
- *                   type: string
- *                 lastName:
- *                   type: string
- *                 dateOfBirth:
- *                   type: string
- *                   format: date
- *                 createdAt:
- *                   type: string
- *                   format: date-time
- *                 updatedAt:
- *                   type: string
- *                   format: date-time
+ *               $ref: '#/components/schemas/Person'
  *
  * /admin/persons/{id}:
  *   get:

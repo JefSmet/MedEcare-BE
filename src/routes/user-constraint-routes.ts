@@ -14,8 +14,8 @@ const router = Router();
 /**
  * @openapi
  * tags:
- *   name: UserConstraint
- *   description: Endpoints for managing user constraints
+ *   - name: UserConstraint
+ *     description: Endpoints for managing user constraints
  *
  * /admin/user-constraints:
  *   get:

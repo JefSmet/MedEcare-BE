@@ -16,8 +16,8 @@ const router = Router();
 /**
  * @openapi
  * tags:
- *   name: Auth
- *   description: Authentication endpoints (register, login, refresh, etc.)
+ *   - name: Auth
+ *     description: Authentication endpoints (register, login, refresh, etc.)
  *
  * /auth/register:
  *   post:
@@ -147,24 +147,6 @@ const router = Router();
  *               properties:
  *                 message:
  *                   type: string
- *                 authenticatedUser:
- *                   type: object
- *                   properties:
- *                     personId:
- *                       type: string
- *                     email:
- *                       type: string
- *                     roles:
- *                       type: array
- *                       items:
- *                         type: string
- *                     firstName:
- *                       type: string
- *                     lastName:
- *                       type: string
- *                     dateOfBirth:
- *                       type: string
- *                       format: date-time
  *       400:
  *         description: No refreshToken cookie present
  *       401:

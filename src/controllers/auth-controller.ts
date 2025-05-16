@@ -1,15 +1,15 @@
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
-import { NextFunction, Request, Response } from 'express';
-import { CookieOptions } from 'express';
+import {
+  Request,
+  Response,
+  NextFunction,
+  CookieOptions,
+} from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
 
-// Import the AuthenticatedUser interface here
 import { AuthenticatedUser } from '../config/passport-strategies';
-
-const prisma = new PrismaClient();
-
 import {
   findRefreshToken,
   removeRefreshToken,
@@ -27,6 +27,11 @@ import {
 import { isPasswordValid } from '../utils/password-validator';
 import { generateTokens } from '../utils/token-utils';
 
+const prisma = new PrismaClient();
+
+/* ------------------------------------------------------------------ */
+/* 1. REGISTER                                                         */
+/* ------------------------------------------------------------------ */
 interface RegisterRequestBody {
   email?: string;
   password?: string;
@@ -36,26 +41,29 @@ interface RegisterRequestBody {
   dateOfBirth?: string;
 }
 
-/**
- * Registration endpoint
- */
 export async function register(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
   try {
-    const { email, password, role, firstName, lastName, dateOfBirth } =
-      req.body as RegisterRequestBody;
+    const {
+      email,
+      password,
+      role,
+      firstName,
+      lastName,
+      dateOfBirth,
+    } = req.body as RegisterRequestBody;
 
     if (!email || !password) {
       res.status(400).json({ error: 'Email and password are required fields.' });
       return;
     }
     if (!firstName || !lastName || !dateOfBirth) {
-      res
-        .status(400)
-        .json({ error: 'First name, last name, and date of birth are required fields.' });
+      res.status(400).json({
+        error: 'First name, last name, and date of birth are required fields.',
+      });
       return;
     }
     if (!isPasswordValid(password)) {
@@ -73,7 +81,6 @@ export async function register(
       return;
     }
 
-    // Check for existing person or create one
     const existingPerson = await prisma.person.findFirst({
       where: { firstName, lastName, dateOfBirth: parsedDate },
     });
@@ -88,7 +95,6 @@ export async function register(
       personId = newPerson.id;
     }
 
-    // Create the user
     const newUser = await createUser({ email, password, role, personId });
 
     res.status(201).json({
@@ -98,25 +104,21 @@ export async function register(
         email: newUser.email,
       },
     });
-  } catch (error: any) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* 2. LOGIN – web cookies + mobile Bearer                              */
+/* ------------------------------------------------------------------ */
 interface LoginRequestBody {
   email?: string;
   password?: string;
   platform?: 'web' | 'mobile' | 'web-persist';
 }
 
-/**
- * Login endpoint
- */
-export function login(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void {
+export function login(req: Request, res: Response, next: NextFunction): void {
   passport.authenticate(
     'local',
     async (err: any, user: AuthenticatedUser, info: any) => {
@@ -133,72 +135,86 @@ export function login(
         const { platform = 'web' } = req.body as LoginRequestBody;
         const tokens = generateTokens({ personId: user.personId } as any, platform);
 
-        // Determine refresh token expiration
-        let refreshExpireDays = platform === 'web' ? 7 : 30;
-        if (platform === 'web-persist') refreshExpireDays = 30;
+        /* ---------------- mobile / FMX ---------------- */
+        if (platform === 'mobile') {
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 30);
+          await storeRefreshToken(user.personId, tokens.refreshToken, expiresAt);
 
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + refreshExpireDays);
+          res.status(200).json({
+            message: 'Login successful.',
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            authenticatedUser: user,
+          });
+          return;
+        }
 
-        await storeRefreshToken(user.personId, tokens.refreshToken, expiresAt);
-
-        // Cookies
+        /* ---------------- web & web-persist ---------------- */
         const isProd = process.env.NODE_ENV === 'production';
         const cookieOptions: CookieOptions = {
           httpOnly: true,
           secure: isProd,
           sameSite: 'strict',
         };
-        if (platform === 'web-persist') {
-          cookieOptions.maxAge = refreshExpireDays * 24 * 60 * 60 * 1000;
-        }
 
-        res.cookie('accessToken', tokens.accessToken, cookieOptions);
-        res.cookie('refreshToken', tokens.refreshToken, cookieOptions);
+        const refreshExpireDays = platform === 'web-persist' ? 30 : 7;
+        cookieOptions.expires = new Date(
+          Date.now() + refreshExpireDays * 86_400_000,
+        );
 
-        res.status(200).json({
-          message: 'Login successful.',
-          authenticatedUser: {
-            personId: user.personId,
-            email: user.email,
-            roles: user.roles,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            dateOfBirth: user.dateOfBirth,
-          },
-        });
-      } catch (tokenError) {
-        next(tokenError);
+        await storeRefreshToken(
+          user.personId,
+          tokens.refreshToken,
+          cookieOptions.expires!,
+        );
+
+        res
+          .cookie('accessToken', tokens.accessToken, cookieOptions)
+          .cookie('refreshToken', tokens.refreshToken, cookieOptions)
+          .status(200)
+          .json({
+            message: 'Login successful.',
+            authenticatedUser: user,
+          });
+      } catch (e) {
+        next(e);
       }
     },
   )(req, res, next);
 }
 
-/**
- * Refresh-token endpoint
- */
+/* ------------------------------------------------------------------ */
+/* 3. REFRESH TOKEN                                                    */
+/* ------------------------------------------------------------------ */
 export async function refreshToken(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
   try {
-    const cookie = req.cookies?.refreshToken;
-    if (!cookie) {
-      res.status(400).json({ error: 'No refreshToken cookie present.' });
+    const suppliedToken: string | undefined =
+      req.cookies?.refreshToken ||
+      req.body?.refreshToken ||
+      (req.headers['x-refresh-token'] as string | undefined);
+
+    if (!suppliedToken) {
+      res.status(400).json({ error: 'No refresh token supplied.' });
       return;
     }
 
-    const secret = process.env.JWT_SECRET || 'changeme';
     let payload: any;
     try {
-      payload = jwt.verify(cookie, secret);
+      payload = jwt.verify(
+        suppliedToken,
+        process.env.JWT_SECRET || 'changeme',
+      );
     } catch {
       res.status(401).json({ error: 'Invalid or expired refresh token.' });
       return;
     }
 
-    const existing = await findRefreshToken(cookie);
+    const existing = await findRefreshToken(suppliedToken);
     if (!existing) {
       res
         .status(404)
@@ -206,72 +222,59 @@ export async function refreshToken(
       return;
     }
     if (existing.expiresAt < new Date()) {
-      await removeRefreshToken(cookie);
+      await removeRefreshToken(suppliedToken);
       res.status(401).json({ error: 'Refresh token is expired.' });
       return;
     }
 
-    await removeRefreshToken(cookie);
+    await removeRefreshToken(suppliedToken);
 
-    const userId = payload.id as string;
     const { platform = 'web' } = req.body as { platform?: string };
+    const newTokens = generateTokens({ personId: payload.id } as any, platform);
 
-    const dbUser = await findById(userId);
-    if (!dbUser) {
-      res.status(404).json({ error: 'User not found.' });
+    /* ---------------- mobile / FMX ---------------- */
+    if (platform === 'mobile') {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+      await storeRefreshToken(payload.id, newTokens.refreshToken, expiresAt);
+
+      res.status(200).json({
+        message: 'Tokens successfully renewed.',
+        accessToken: newTokens.accessToken,
+        refreshToken: newTokens.refreshToken,
+      });
       return;
     }
 
-    const newTokens = generateTokens({ personId: userId } as any, platform);
-    let refreshExpireDays = platform === 'web' ? 7 : 30;
-    if (platform === 'web-persist') refreshExpireDays = 30;
-
-    const newExpiresAt = new Date();
-    newExpiresAt.setDate(newExpiresAt.getDate() + refreshExpireDays);
-
-    await storeRefreshToken(userId, newTokens.refreshToken, newExpiresAt);
-
+    /* ---------------- web ---------------- */
     const isProd = process.env.NODE_ENV === 'production';
-    const accessMaxAge =
-      parseInt((process.env.ACCESS_TOKEN_EXPIRY_WEB || '1h').replace('h', ''), 10) *60*
-        60 *
-        1000 || 3600000;
+    const refreshExpireDays = platform === 'web-persist' ? 30 : 7;
+    const refreshExpires = new Date(Date.now() + refreshExpireDays * 86_400_000);
 
-    res.cookie('accessToken', newTokens.accessToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: 'strict',
-      maxAge: accessMaxAge,
-    });
-    res.cookie('refreshToken', newTokens.refreshToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: 'strict',
-      expires: newExpiresAt,
-    });
+    await storeRefreshToken(payload.id, newTokens.refreshToken, refreshExpires);
 
-    // Build AuthenticatedUser for the response
-    const authenticatedUser: AuthenticatedUser = {
-      personId: dbUser.personId,
-      email: dbUser.email,
-      roles: dbUser.roles,
-      firstName: dbUser.person.firstName,
-      lastName: dbUser.person.lastName,
-      dateOfBirth: dbUser.person.dateOfBirth,
-    };
-
-    res.status(200).json({
-      message: 'Tokens successfully renewed.',
-      authenticatedUser,
-    });
-  } catch (error: any) {
-    next(error);
+    res
+      .cookie('accessToken', newTokens.accessToken, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'strict',
+      })
+      .cookie('refreshToken', newTokens.refreshToken, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'strict',
+        expires: refreshExpires,
+      })
+      .status(200)
+      .json({ message: 'Tokens successfully renewed.' });
+  } catch (e) {
+    next(e);
   }
 }
 
-/**
- * Forgot-password endpoint
- */
+/* ------------------------------------------------------------------ */
+/* 4. FORGOT PASSWORD                                                  */
+/* ------------------------------------------------------------------ */
 interface ForgotPasswordRequestBody {
   email?: string;
 }
@@ -312,14 +315,14 @@ export async function forgotPassword(
       message:
         'Reset instructions have been sent to the provided email address (if valid).',
     });
-  } catch (error: any) {
-    next(error);
+  } catch (e) {
+    next(e);
   }
 }
 
-/**
- * Reset-password endpoint
- */
+/* ------------------------------------------------------------------ */
+/* 5. RESET PASSWORD                                                   */
+/* ------------------------------------------------------------------ */
 interface ResetPasswordRequestBody {
   token?: string;
   newPassword?: string;
@@ -356,20 +359,19 @@ export async function resetPassword(
       return;
     }
     await updatePassword(user.personId, newPassword);
-    // Invalidate the token
     await storeResetToken(user.personId, '', new Date(0));
 
     res
       .status(200)
       .json({ message: 'Password has been reset successfully. You can now log in.' });
-  } catch (error: any) {
-    next(error);
+  } catch (e) {
+    next(e);
   }
 }
 
-/**
- * Change-password endpoint
- */
+/* ------------------------------------------------------------------ */
+/* 6. CHANGE PASSWORD                                                  */
+/* ------------------------------------------------------------------ */
 interface ChangePasswordRequestBody {
   oldPassword?: string;
   newPassword?: string;
@@ -415,21 +417,25 @@ export async function changePassword(
 
     await updatePassword(dbUser.personId, newPassword);
     res.status(200).json({ message: 'Password changed successfully.' });
-  } catch (error: any) {
-    next(error);
+  } catch (e) {
+    next(e);
   }
 }
 
-/**
- * Logout endpoint
- */
+/* ------------------------------------------------------------------ */
+/* 7. LOGOUT                                                           */
+/* ------------------------------------------------------------------ */
 export async function logout(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
   try {
-    const cookie = req.cookies?.refreshToken;
+    const token: string | undefined =
+      req.cookies?.refreshToken ||
+      req.body?.refreshToken ||
+      (req.headers['x-refresh-token'] as string | undefined);
+
     const isProd = process.env.NODE_ENV === 'production';
 
     res.clearCookie('refreshToken', {
@@ -443,24 +449,16 @@ export async function logout(
       sameSite: 'strict',
     });
 
-    if (!cookie) {
-      res.status(200).json({ message: 'Logout successful (no token present).' });
-      return;
-    }
-
-    try {
-      await removeRefreshToken(cookie);
-      res.status(200).json({ message: 'Logout successful. Refresh token invalidated.' });
-    } catch (removeError: any) {
-      if (removeError.code === 'P2025') {
-        res
-          .status(200)
-          .json({ message: 'Logout successful. Token was not found in the DB.' });
-      } else {
-        throw removeError;
+    if (token) {
+      try {
+        await removeRefreshToken(token);
+      } catch (err: any) {
+        if (err.code !== 'P2025') throw err;
       }
     }
-  } catch (error: any) {
-    next(error);
+
+    res.status(200).json({ message: 'Logout successful.' });
+  } catch (e) {
+    next(e);
   }
 }

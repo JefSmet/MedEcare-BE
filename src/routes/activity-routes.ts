@@ -15,35 +15,8 @@ const router = Router();
 /**
  * @openapi
  * tags:
- *   name: Activity
- *   description: Endpoints for managing activities (shifts, leave, conferences, etc.)
- *
- * components:
- *   schemas:
- *     ActivityRequestBody:
- *       type: object
- *       required:
- *         - activityType
- *         - start
- *         - end
- *         - personId
- *       properties:
- *         activityType:
- *           type: string
- *         start:
- *           type: string
- *           format: date-time
- *         end:
- *           type: string
- *           format: date-time
- *         personId:
- *           type: string
- *         shiftTypeId:
- *           type: string
- *         status:
- *           type: string
- *           description: Status of the activity (SCHEDULED, COMPLETED, CANCELLED, etc.)
- *           default: SCHEDULED
+ *   - name: Activity
+ *     description: Endpoints for managing activities (shifts, leave, conferences, etc.)
  *
  * /admin/activities:
  *   get:
@@ -155,6 +128,7 @@ const router = Router();
  *                   type: string
  *       404:
  *         description: Activity not found
+ *
  * /admin/activities/filter:
  *   get:
  *     summary: List activities filtered by year, month, and activityType
@@ -167,19 +141,16 @@ const router = Router();
  *         required: true
  *         schema:
  *           type: integer
- *         description: The year to filter activities by
  *       - in: query
  *         name: month
  *         required: true
  *         schema:
  *           type: integer
- *         description: The month (1-12) to filter activities by
  *       - in: query
  *         name: activityType
  *         required: false
  *         schema:
  *           type: string
- *         description: The activity type to filter by
  *     responses:
  *       200:
  *         description: Returns a list of filtered activities

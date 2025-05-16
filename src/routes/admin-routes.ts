@@ -14,8 +14,8 @@ const router = Router();
 /**
  * @openapi
  * tags:
- *   name: Admin
- *   description: Admin endpoints for user management
+ *   - name: Admin
+ *     description: Admin endpoints for user management
  *
  * /admin/users:
  *   get:
