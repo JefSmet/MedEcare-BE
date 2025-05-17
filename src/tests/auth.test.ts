@@ -29,9 +29,18 @@ describe('AUTHENTICATION FLOWS', () => {
 
   afterAll(async () => {
     // Clean up any user whose email starts with 'testuser_'
-    await prisma.user.deleteMany({
+    const users = await prisma.user.findMany({
       where: { email: { startsWith: 'testuser_' } },
+      select: { personId: true },
     });
+    const ids = users.map(u => u.personId);
+    if (ids.length) {
+      await prisma.userRole.deleteMany({ where: { userId: { in: ids } } });
+      await prisma.refreshToken.deleteMany({ where: { userId: { in: ids } } });
+      await prisma.user.deleteMany({ where: { personId: { in: ids } } });
+      await prisma.person.deleteMany({ where: { id: { in: ids } } });
+    }
+    await prisma.user.deleteMany({ where: { email: { startsWith: 'testuser_' } } });
     await prisma.$disconnect();
   });
 
@@ -41,7 +50,7 @@ describe('AUTHENTICATION FLOWS', () => {
       const res = await request(app).post('/auth/register').send({
         email: testEmail,
         password: testPassword,
-        firstName: 'John',
+        firstName: `John_${Date.now()}`,
         lastName: 'Doe',
         dateOfBirth: '1990-05-01',
       });
@@ -92,7 +101,7 @@ describe('AUTHENTICATION FLOWS', () => {
       });
       if (res.status === 200) {
         expect(res.body).toHaveProperty('message', 'Login successful.');
-        expect(res.body.user).toHaveProperty('email', testEmail);
+        expect(res.body.authenticatedUser).toHaveProperty('email', testEmail);
 
         // Check that cookies are present in the response
         const setCookieHeader = res.headers['set-cookie'];

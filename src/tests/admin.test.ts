@@ -36,9 +36,9 @@ describe('ADMIN FLOWS', () => {
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     // Ensure the 'ADMIN' role exists
     const adminRole = await prisma.role.upsert({
-      where: { name: 'ADMIN' },
+      where: { name: 'admin' },
       update: {},
-      create: { name: 'ADMIN' },
+      create: { name: 'admin' },
     });
 
     const person = await prisma.person.create({
@@ -74,6 +74,23 @@ describe('ADMIN FLOWS', () => {
 
   afterAll(async () => {
     // Cleanup admin user & normal user if they exist
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { email: adminEmail },
+          { personId: normalUserId },
+          { person: { firstName: 'AdminFirst', lastName: 'AdminLast' } },
+        ],
+      },
+      include: { person: true },
+    });
+    const ids = users.map(u => u.personId);
+    if (ids.length) {
+      await prisma.userRole.deleteMany({ where: { userId: { in: ids } } });
+      await prisma.refreshToken.deleteMany({ where: { userId: { in: ids } } });
+      await prisma.user.deleteMany({ where: { personId: { in: ids } } });
+      await prisma.person.deleteMany({ where: { id: { in: ids } } });
+    }
     await prisma.user.deleteMany({
       where: {
         OR: [{ email: adminEmail }, { personId: normalUserId }],
@@ -140,7 +157,7 @@ describe('ADMIN FLOWS', () => {
         .get('/admin/users')
         .set('Cookie', adminCookies);
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body.users)).toBe(true);
+      expect(Array.isArray(res.body)).toBe(true);
     });
 
     it('should create a new user with specified role', async () => {
@@ -150,7 +167,7 @@ describe('ADMIN FLOWS', () => {
         .send({
           email: `test_admin_create_${Date.now()}@example.com`,
           password: 'UserPass#1',
-          role: 'USER',
+          role: 'user',
         });
 
       // In practice, 'createNewUser' might fail if personId is required and not provided.

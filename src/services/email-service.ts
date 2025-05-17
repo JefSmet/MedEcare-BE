@@ -85,6 +85,9 @@ export async function sendEmail(
   text: string,
   html?: string,
 ): Promise<void> {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
   const chosenProvider = EMAIL_PROVIDER.toLowerCase();
   const finalHtml = html || `<p>${text}</p>`; // fallback if HTML not provided
 

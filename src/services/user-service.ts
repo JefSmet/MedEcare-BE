@@ -58,9 +58,9 @@ export async function createUser({
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Attempt to connect to the role or default to 'USER'
+    // Attempt to connect to the role or default to 'user' (matches seed data)
     let connectRoleData = [];
-    let roleName = role || 'USER';
+    let roleName = role ? role.toLowerCase() : 'user';
 
     const foundRole = await prisma.role.findUnique({
       where: { name: roleName },
