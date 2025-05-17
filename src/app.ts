@@ -41,6 +41,7 @@ loadEnv();
 
 // 2. Create the Express app
 const app = express();
+app.set('etag', false); // Disable ETag generation
 // Disable the X-Powered-By header for security
 app.disable('x-powered-by');
 
