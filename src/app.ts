@@ -41,6 +41,8 @@ loadEnv();
 
 // 2. Create the Express app
 const app = express();
+// Disable the X-Powered-By header for security
+app.disable('x-powered-by');
 
 // 3. Global middleware
 app.use(
