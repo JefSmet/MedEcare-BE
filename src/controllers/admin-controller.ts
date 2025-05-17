@@ -22,6 +22,7 @@
 
 import bcrypt from 'bcrypt';
 import { NextFunction, Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
 import {
   createUser,
   deleteUser,
@@ -30,6 +31,8 @@ import {
   updateUser,
 } from '../services/user-service';
 import { isPasswordValid } from '../utils/password-validator';
+
+const prisma = new PrismaClient();
 
 /**
  * @function listUsers
@@ -98,8 +101,15 @@ export async function createNewUser(
     // personId or do something else, but let's keep it consistent with your logic.
     // This example doesn't show where you get personId from.
     // If you do have a personId from the request, just pass it in.
-    const newUser = await createUser({ email, password, role, personId: '' });
-    // The above would fail unless there's a valid personId. Adjust as needed.
+    const tempPerson = await prisma.person.create({
+      data: {
+        firstName: 'AdminCreated',
+        lastName: 'User',
+        dateOfBirth: new Date('2000-01-01'),
+      },
+    });
+
+    const newUser = await createUser({ email, password, role, personId: tempPerson.id });
 
     res.status(201).json({
       message: 'User created successfully by Admin.',
@@ -180,6 +190,8 @@ export async function deleteExistingUser(
 ): Promise<void> {
   try {
     const userId = req.params.id;
+    await prisma.userRole.deleteMany({ where: { userId } });
+    await prisma.refreshToken.deleteMany({ where: { userId } });
     const deleted = await deleteUser(userId);
 
     res.status(200).json({

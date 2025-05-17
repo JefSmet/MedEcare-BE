@@ -16,7 +16,8 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['**/tests/**/*.test.ts']
+  testMatch: ['**/tests/**/*.test.ts'],
+  setupFiles: ['<rootDir>/src/tests/setup-env.ts']
 };
 
 export default config;
