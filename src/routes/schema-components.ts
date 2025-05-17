@@ -58,7 +58,7 @@
  *           type: string
  *           description: Status of the activity (SCHEDULED, COMPLETED, CANCELLED, etc.)
  *         personId:   { type: string }
- *         shiftTypeId:{ type: string, nullable: true }
+ *         shiftTypeId: { type: string, nullable: true }
  *         createdAt:  { type: string, format: date-time }
  *         updatedAt:  { type: string, format: date-time }
  *         person:
@@ -150,8 +150,8 @@
  *       properties:
  *         personId: { type: string }
  *         email:    { type: string }
- *         createdAt:{ type: string, format: date-time }
- *         updatedAt:{ type: string, format: date-time }
+ *         createdAt: { type: string, format: date-time }
+ *         updatedAt: { type: string, format: date-time }
  *         person:   { $ref: '#/components/schemas/AdminPersonResponse' }
  *
  *     SimplePersonResponse:
