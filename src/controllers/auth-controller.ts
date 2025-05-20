@@ -227,6 +227,22 @@ export async function refreshToken(
       return;
     }
 
+    // Get user data for the authenticatedUser response
+    const user = await findById(payload.id);
+    if (!user) {
+      res.status(404).json({ error: 'User not found.' });
+      return;
+    }
+    
+    const authenticatedUser: AuthenticatedUser = {
+      personId: user.personId,
+      firstName: user.person.firstName,
+      lastName: user.person.lastName,
+      dateOfBirth: user.person.dateOfBirth,
+      email: user.email,
+      roles: user.roles
+    };
+
     await removeRefreshToken(suppliedToken);
 
     const { platform = 'web' } = req.body as { platform?: string };
@@ -242,6 +258,7 @@ export async function refreshToken(
         message: 'Tokens successfully renewed.',
         accessToken: newTokens.accessToken,
         refreshToken: newTokens.refreshToken,
+        authenticatedUser
       });
       return;
     }
@@ -266,7 +283,10 @@ export async function refreshToken(
         expires: refreshExpires,
       })
       .status(200)
-      .json({ message: 'Tokens successfully renewed.' });
+      .json({ 
+        message: 'Tokens successfully renewed.',
+        authenticatedUser
+      });
   } catch (e) {
     next(e);
   }
