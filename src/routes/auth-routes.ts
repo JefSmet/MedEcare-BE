@@ -93,7 +93,10 @@ const router = Router();
  *                 description: "web, mobile, or web-persist"
  *     responses:
  *       200:
- *         description: Login successful; tokens are set as HttpOnly cookies
+ *         description: |
+ *           Login successful. For `platform` "mobile" the access and refresh
+ *           tokens are included in the response body. For other platforms the
+ *           tokens are set as HttpOnly cookies.
  *         content:
  *           application/json:
  *             schema:
@@ -101,6 +104,12 @@ const router = Router();
  *               properties:
  *                 message:
  *                   type: string
+ *                 accessToken:
+ *                   type: string
+ *                   description: Present only when `platform` is "mobile"
+ *                 refreshToken:
+ *                   type: string
+ *                   description: Present only when `platform` is "mobile"
  *                 authenticatedUser:
  *                   type: object
  *                   properties:
@@ -139,7 +148,10 @@ const router = Router();
  *                 description: "web, mobile, or web-persist"
  *     responses:
  *       200:
- *         description: New tokens set in cookies
+ *         description: |
+ *           Tokens successfully renewed. For `platform` "mobile" the new tokens
+ *           are returned in the response body. Otherwise they are set as
+ *           HttpOnly cookies.
  *         content:
  *           application/json:
  *             schema:
@@ -147,6 +159,30 @@ const router = Router();
  *               properties:
  *                 message:
  *                   type: string
+ *                 accessToken:
+ *                   type: string
+ *                   description: Present only when `platform` is "mobile"
+ *                 refreshToken:
+ *                   type: string
+ *                   description: Present only when `platform` is "mobile"
+ *                 authenticatedUser:
+ *                   type: object
+ *                   properties:
+ *                     personId:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     roles:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     dateOfBirth:
+ *                       type: string
+ *                       format: date-time
  *       400:
  *         description: No refreshToken cookie present
  *       401:
@@ -170,6 +206,13 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Reset instructions sent (if email is valid)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       400:
  *         description: Missing email address
  *       404:
@@ -196,6 +239,13 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Password successfully reset
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       400:
  *         description: Missing fields or token expired
  *       404:
@@ -224,6 +274,13 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Password successfully changed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       400:
  *         description: Missing fields or weak password
  *       401:
