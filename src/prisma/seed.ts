@@ -134,7 +134,12 @@ async function main() {
     for (const p of persons) {
       await tx.person.upsert({
         where: { id: p.id },
-        update: { dateOfBirth: p.dateOfBirth },
+        update: {
+          firstName: p.firstName,
+          lastName: p.lastName,
+          dateOfBirth: p.dateOfBirth,
+          updatedAt: p.updatedAt
+        },
         create: p,
       })
     }
@@ -143,14 +148,16 @@ async function main() {
      * 2. Roles                                                           *
      * ------------------------------------------------------------------ */
     const roles = [
-      { id: 'c4074275-394f-4e3c-b6cd-208742851a02', name: 'admin' },
-      { id: 'ec8de067-2638-4449-ac78-61513b449c47', name: 'user' },
+      { id: 'c4074275-394f-4e3c-b6cd-208742851a02', name: 'ADMIN' },
+      { id: 'ec8de067-2638-4449-ac78-61513b449c47', name: 'USER' },
     ]
 
     for (const r of roles) {
       await tx.role.upsert({
         where: { id: r.id },
-        update: {},
+        update: {
+          name: r.name
+        },
         create: r,
       })
     }
@@ -185,7 +192,11 @@ async function main() {
     for (const u of users) {
       await tx.user.upsert({
         where: { personId: u.personId },
-        update: {},
+        update: {
+          email: u.email,
+          password: u.password,
+          updatedAt: u.updatedAt
+        },
         create: u,
       })
     }
@@ -263,7 +274,15 @@ async function main() {
     for (const s of shiftTypes) {
       await tx.shiftType.upsert({
         where: { id: s.id },
-        update: {},
+        update: {
+          name: s.name,
+          startHour: s.startHour,
+          startMinute: s.startMinute,
+          durationMinutes: s.durationMinutes,
+          activeFrom: s.activeFrom,
+          activeUntil: s.activeUntil,
+          updatedAt: s.updatedAt
+        },
         create: s,
       })
     }
@@ -304,7 +323,13 @@ async function main() {
     for (const r of shiftTypeRates) {
       await tx.shiftTypeRate.upsert({
         where: { id: r.id },
-        update: {},
+        update: {
+          shiftTypeId: r.shiftTypeId,
+          rate: r.rate,
+          validFrom: r.validFrom,
+          validUntil: r.validUntil,
+          updatedAt: r.updatedAt
+        },
         create: r,
       })
     }
