@@ -22,10 +22,9 @@
  * - We flatten user roles into user.roles in the passport strategies.
  */
 
-import { Person, PrismaClient, User } from '@prisma/client';
+import { Person, User } from '@prisma/client';
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/client';
 
 interface CreateUserParams {
   email: string;

@@ -22,7 +22,7 @@
 
 import bcrypt from 'bcrypt';
 import { NextFunction, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma/client';
 import {
   createUser,
   deleteUser,
@@ -32,7 +32,6 @@ import {
 } from '../services/user-service';
 import { isPasswordValid } from '../utils/password-validator';
 
-const prisma = new PrismaClient();
 
 /**
  * @function listUsers

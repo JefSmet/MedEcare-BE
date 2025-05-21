@@ -3,8 +3,7 @@
 // Run:
 //   npx ts-node src/prisma/seed-sqlite.ts
 
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import prisma from './client'
 
 // Helper function to add days to a date
 function addDays(date: Date, days: number): Date {

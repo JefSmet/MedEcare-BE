@@ -16,11 +16,9 @@
  * - The code now sets tokens in HttpOnly cookies, so we must check cookies, not JSON for tokens.
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma/client';
 import request from 'supertest';
 import app from '../app';
-
-const prisma = new PrismaClient();
 
 describe('AUTHENTICATION FLOWS', () => {
   let testCookies: string[] = [];

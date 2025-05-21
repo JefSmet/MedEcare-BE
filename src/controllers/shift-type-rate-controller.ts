@@ -13,10 +13,8 @@
  * - Each ShiftTypeRate references a ShiftType by shiftTypeId.
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma/client';
 import { Request, Response, NextFunction } from 'express';
-
-const prisma = new PrismaClient();
 
 export async function listShiftTypeRates(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
