@@ -6,8 +6,7 @@
 // Run:
 //   npx prisma db seed
 
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import prisma from './client'
 
 async function main() {
   await prisma.$transaction(async (tx) => {

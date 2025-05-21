@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma/client';
 import crypto from 'crypto';
 import {
   Request,
@@ -27,7 +27,6 @@ import {
 import { isPasswordValid } from '../utils/password-validator';
 import { generateTokens } from '../utils/token-utils';
 
-const prisma = new PrismaClient();
 
 /* ------------------------------------------------------------------ */
 /* 1. REGISTER                                                         */

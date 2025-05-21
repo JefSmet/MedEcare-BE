@@ -17,10 +17,8 @@
  * - For advanced usage, you might have join queries, etc.
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma/client';
 import { Request, Response, NextFunction } from 'express';
-
-const prisma = new PrismaClient();
 
 export async function listPersons(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

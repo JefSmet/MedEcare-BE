@@ -16,12 +16,10 @@
  * - In a production environment, you might want a separate test DB or seeding logic
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma/client';
 import bcrypt from 'bcrypt';
 import request from 'supertest';
 import app from '../app';
-
-const prisma = new PrismaClient();
 
 describe('ADMIN FLOWS', () => {
   let adminCookies: string[] = [];

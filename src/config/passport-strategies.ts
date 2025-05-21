@@ -1,4 +1,5 @@
-import { PrismaClient, User, Person, UserRole, Role } from '@prisma/client';
+import { User, Person, UserRole, Role } from '@prisma/client';
+import prisma from '../prisma/client';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
@@ -41,7 +42,6 @@ function toAuthenticatedUser(
   };
 }
 
-const prisma = new PrismaClient();
 
 /* ------------------------------------------------------------------ */
 /* 3. Local Strategy                                                   */

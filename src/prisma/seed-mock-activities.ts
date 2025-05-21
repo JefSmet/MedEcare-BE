@@ -3,11 +3,10 @@
 // This script creates mock activity data for shifts in months January through July 2025
 // Run with: npx ts-node src/prisma/seed-mock-activities.ts
 
-import { PrismaClient } from '@prisma/client';
+import prisma from './client';
 
 console.log("Starting seed mock activities script...");
 
-const prisma = new PrismaClient();
 
 async function main() {
   try {

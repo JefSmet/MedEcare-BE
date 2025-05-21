@@ -14,10 +14,8 @@
  * - personId is required, shiftTypeId is optional if it's a SHIFT.
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma/client';
 import { NextFunction, Request, Response } from 'express';
-
-const prisma = new PrismaClient();
 
 export async function listActivities(
   req: Request,

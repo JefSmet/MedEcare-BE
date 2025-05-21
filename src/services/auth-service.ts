@@ -20,9 +20,8 @@
  * - The single-use approach for refresh tokens means we remove them once used or expired.
  */
 
-import { PrismaClient, RefreshToken } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { RefreshToken } from '@prisma/client';
+import prisma from '../prisma/client';
 
 /**
  * @function storeRefreshToken
