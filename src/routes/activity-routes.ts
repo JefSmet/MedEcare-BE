@@ -6,6 +6,7 @@ import {
   getActivityById,
   listActivities,
   updateActivity,
+  activitiesPeriodFilter,
 } from '../controllers/activity-controller';
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
@@ -160,8 +161,54 @@ const router = Router();
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Activity'
+ * /admin/activities/period:
+ *   get:
+ *     summary: List activities filtered by startDate, endDate, and optional activityType
+ *     tags: [Activity]
+ *     security:
+ *       - CookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start date of the period (ISO 8601 format)
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End date of the period (ISO 8601 format)
+ *       - in: query
+ *         name: activityType
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional activity type to filter by (e.g., SHIFT, LEAVE)
+ *     responses:
+ *       200:
+ *         description: Returns a list of filtered activities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Activity'
+ *       400:
+ *         description: Missing or invalid query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 router.get('/filter', jwtAuth, requireAdmin, filterActivities);
+router.get('/period', jwtAuth, requireAdmin, activitiesPeriodFilter);
 
 router.get('/', jwtAuth, requireAdmin, listActivities);
 router.post('/', jwtAuth, requireAdmin, createActivity);

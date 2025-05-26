@@ -167,3 +167,47 @@ export async function filterActivities(
     next(error);
   }
 }
+
+export async function activitiesPeriodFilter(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const startDateStr = req.query.startDate as string;
+    const endDateStr = req.query.endDate as string;
+    const activityType = req.query.activityType as string | undefined;
+
+    if (!startDateStr || !endDateStr) {
+      res.status(400).json({ error: 'startDate and endDate are required' });
+      return;
+    }
+
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      res.status(400).json({ error: 'Invalid date format for startDate or endDate' });
+      return;
+    }
+
+    const where: any = {
+      start: { gte: startDate },
+      end: { lte: endDate },
+    };
+    if (activityType) {
+      where.activityType = activityType;
+    }
+
+    const activities = await prisma.activity.findMany({
+      where,
+      include: {
+        person: true,
+        shiftType: true,
+      },
+    });
+    res.json(activities);
+  } catch (error) {
+    next(error);
+  }
+}
