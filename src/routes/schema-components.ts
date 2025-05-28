@@ -154,15 +154,30 @@
  *         updatedAt: { type: string, format: date-time }
  *         person:   { $ref: '#/components/schemas/AdminPersonResponse' }
  *
- *     SimplePersonResponse:
+ *     AuthUserResponse:
  *       type: object
  *       properties:
- *         id: { type: string }
- *         firstName: { type: string }
- *         lastName:  { type: string }
- *         dateOfBirth: { type: string, format: date }
- *         createdAt: { type: string, format: date-time }
- *         updatedAt: { type: string, format: date-time }
+ *         message:
+ *           type: string
+ *           example: Login successful.
+ *         authenticatedUser:
+ *           type: object
+ *           properties:
+ *             personId:
+ *               type: string
+ *             email:
+ *               type: string
+ *             roles:
+ *               type: array
+ *               items:
+ *                 type: string
+ *             firstName:
+ *               type: string
+ *             lastName:
+ *               type: string
+ *             dateOfBirth:
+ *               type: string
+ *               format: date
  *
  *   responses:
  *     NotFound:

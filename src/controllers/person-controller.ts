@@ -101,3 +101,18 @@ export async function deletePerson(req: Request, res: Response, next: NextFuncti
     next(error);
   }
 }
+
+export async function listStaff(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    // Find all doctors where isEnabledInShifts is true, include person details
+    const doctors = await prisma.doctor.findMany({
+      where: { isEnabledInShifts: true },
+      include: {
+        person: true,
+      },
+    });
+    res.json(doctors);
+  } catch (error) {
+    next(error);
+  }
+}

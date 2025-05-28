@@ -148,16 +148,14 @@ async function main() {
      * 2. Roles                                                           *
      * ------------------------------------------------------------------ */
     const roles = [
-      { id: 'c4074275-394f-4e3c-b6cd-208742851a02', name: 'ADMIN' },
-      { id: 'ec8de067-2638-4449-ac78-61513b449c47', name: 'USER' },
+      { name: 'ADMIN' },
+      { name: 'USER' },
     ]
 
     for (const r of roles) {
       await tx.role.upsert({
-        where: { id: r.id },
-        update: {
-          name: r.name
-        },
+        where: { name: r.name }, // unique field 'name'
+        update: {},
         create: r,
       })
     }
@@ -454,6 +452,41 @@ async function main() {
         where: { id: uc.id },
         update: {},
         create: uc,
+      })
+    }
+
+    /* ------------------------------------------------------------------ *
+     * 7. Doctors                                                        *
+     * ------------------------------------------------------------------ */
+    const doctors = [
+      { personId: '414756FA-F4A9-4908-B8AB-42982697585E', rizivNumber: '17276985800' },
+      { personId: '2DD622E3-8DC0-4252-82D9-F39B5F93D0C2', rizivNumber: '10960901900' },
+      { personId: 'D7FC6FD4-093A-46A6-94D2-520497754145', rizivNumber: '11758675149' },
+      { personId: '05B2122D-009F-4B8F-B010-2C8E84F2651B', rizivNumber: '14784679800' },
+      { personId: 'C0255E85-86FA-478F-816E-C50C364D367F', rizivNumber: '13807850900' },
+      { personId: '234A95AC-713D-4B84-9702-D68D3E6D6E2B', rizivNumber: '14979669109' },
+      { personId: 'C947B64E-E08D-4B0B-8827-F12C09C2469E', rizivNumber: '14978778900' },
+      { personId: 'C1335314-ABDE-47E9-A6E3-1E1D120D7B04', rizivNumber: '19997341900' },
+      { personId: '6E7431EA-3439-408D-A514-EC9723204771', rizivNumber: '13828042900' },
+      { personId: '37CFACDB-DD29-4125-BCD8-4E8F519D433E', rizivNumber: '13869119900' },
+      { personId: 'D722AB12-7D5B-4A12-989B-7DC23046822F', rizivNumber: '13895942900' },
+      { personId: 'C9E423E0-CE00-4CFA-8DCA-836010BE0EEA', rizivNumber: '13879611900' },
+    ]
+
+    for (const d of doctors) {
+      await tx.doctor.upsert({
+        where: { personId: d.personId },
+        update: {
+          rizivNumber: d.rizivNumber,
+          updatedAt: new Date(),
+        },
+        create: {
+          personId: d.personId,
+          rizivNumber: d.rizivNumber,
+          isEnabledInShifts: d.personId === 'D722AB12-7D5B-4A12-989B-7DC23046822F' ? false : true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       })
     }
   })

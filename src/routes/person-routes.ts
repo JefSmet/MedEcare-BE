@@ -5,6 +5,7 @@ import {
   getPersonById,
   listPersons,
   updatePerson,
+  listStaff,
 } from '../controllers/person-controller';
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
@@ -42,30 +43,18 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - firstName
- *               - lastName
- *               - dateOfBirth
- *             properties:
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               dateOfBirth:
- *                 type: string
- *                 format: date
+ *             $ref: '#/components/schemas/PersonRequestBody'
  *     responses:
  *       201:
- *         description: The newly created person
+ *         description: Person created
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Person'
+ *               $ref: '#/components/schemas/PersonResponse'
  *
  * /admin/persons/{id}:
  *   get:
- *     summary: Retrieve a person
+ *     summary: Get a person by ID
  *     tags: [Person]
  *     security:
  *       - CookieAuth: []
@@ -77,19 +66,16 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: The requested person
+ *         description: Person details
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Person'
+ *               $ref: '#/components/schemas/PersonResponse'
  *       404:
- *         $ref: '#/components/responses/NotFound'
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
- *       403:
- *         $ref: '#/components/responses/Forbidden'
+ *         description: Person not found
+ *
  *   put:
- *     summary: Update a person
+ *     summary: Update a person by ID
  *     tags: [Person]
  *     security:
  *       - CookieAuth: []
@@ -100,26 +86,21 @@ const router = Router();
  *         schema:
  *           type: string
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
+ *             $ref: '#/components/schemas/PersonRequestBody'
  *     responses:
  *       200:
- *         description: The updated person
+ *         description: Person updated
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Person'
- *       404:
- *         description: Not found
+ *               $ref: '#/components/schemas/PersonResponse'
+ *
  *   delete:
- *     summary: Delete a person
+ *     summary: Delete a person by ID
  *     tags: [Person]
  *     security:
  *       - CookieAuth: []
@@ -131,7 +112,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion successful
+ *         description: Person deleted
  *         content:
  *           application/json:
  *             schema:
@@ -139,10 +120,35 @@ const router = Router();
  *               properties:
  *                 message:
  *                   type: string
- *       404:
- *         description: Not found
+ *
+ * /admin/persons/staff:
+ *   get:
+ *     summary: List all doctors enabled for shifts
+ *     tags: [Person]
+ *     security:
+ *       - CookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of doctors with person details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   personId:
+ *                     type: string
+ *                   rizivNumber:
+ *                     type: string
+ *                   isEnabledInShifts:
+ *                     type: boolean
+ *                   person:
+ *                     $ref: '#/components/schemas/SimplePersonResponse'
  */
+
 router.get('/', jwtAuth, requireAdmin, listPersons);
+router.get('/staff', jwtAuth, requireAdmin, listStaff);
 router.post('/', jwtAuth, requireAdmin, createPerson);
 router.get('/:id', jwtAuth, requireAdmin, getPersonById);
 router.put('/:id', jwtAuth, requireAdmin, updatePerson);

@@ -50,7 +50,7 @@ const router = Router();
  *                 type: string
  *     responses:
  *       201:
- *         description: Newly created role
+ *         description: The newly created role
  *         content:
  *           application/json:
  *             schema:
@@ -58,7 +58,7 @@ const router = Router();
  *
  * /admin/roles/{id}:
  *   get:
- *     summary: Retrieve a role
+ *     summary: Retrieve a role by ID
  *     tags: [Role]
  *     security:
  *       - CookieAuth: []
@@ -76,9 +76,16 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Role'
  *       404:
- *         description: Not found
+ *         description: Role not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *   put:
- *     summary: Update a role
+ *     summary: Update an existing role
  *     tags: [Role]
  *     security:
  *       - CookieAuth: []
@@ -89,14 +96,10 @@ const router = Router();
  *         schema:
  *           type: string
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
+ *             $ref: '#/components/schemas/Role'
  *     responses:
  *       200:
  *         description: The updated role
@@ -105,7 +108,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Role'
  *       404:
- *         description: Not found
+ *         description: Role not found
  *   delete:
  *     summary: Delete a role
  *     tags: [Role]
@@ -119,7 +122,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion completed
+ *         description: Success message
  *         content:
  *           application/json:
  *             schema:

@@ -57,15 +57,9 @@ const router = Router();
  *                 type: integer
  *               durationMinutes:
  *                 type: integer
- *               activeFrom:
- *                 type: string
- *                 format: date-time
- *               activeUntil:
- *                 type: string
- *                 format: date-time
  *     responses:
  *       201:
- *         description: Newly created shift type
+ *         description: The newly created shift type
  *         content:
  *           application/json:
  *             schema:
@@ -73,7 +67,7 @@ const router = Router();
  *
  * /admin/shift-types/{id}:
  *   get:
- *     summary: Retrieve a shift type
+ *     summary: Retrieve a shift type by ID
  *     tags: [ShiftType]
  *     security:
  *       - CookieAuth: []
@@ -92,8 +86,15 @@ const router = Router();
  *               $ref: '#/components/schemas/ShiftType'
  *       404:
  *         description: Shift type not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *   put:
- *     summary: Update a shift type
+ *     summary: Update an existing shift type
  *     tags: [ShiftType]
  *     security:
  *       - CookieAuth: []
@@ -107,22 +108,7 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               startHour:
- *                 type: integer
- *               startMinute:
- *                 type: integer
- *               durationMinutes:
- *                 type: integer
- *               activeFrom:
- *                 type: string
- *                 format: date-time
- *               activeUntil:
- *                 type: string
- *                 format: date-time
+ *             $ref: '#/components/schemas/ShiftType'
  *     responses:
  *       200:
  *         description: The updated shift type
@@ -145,7 +131,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Delete successful
+ *         description: Success message
  *         content:
  *           application/json:
  *             schema:

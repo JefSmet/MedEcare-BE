@@ -55,12 +55,9 @@ const router = Router();
  *               validFrom:
  *                 type: string
  *                 format: date-time
- *               validUntil:
- *                 type: string
- *                 format: date-time
  *     responses:
  *       201:
- *         description: New rate created
+ *         description: The newly created shift-type rate
  *         content:
  *           application/json:
  *             schema:
@@ -68,7 +65,7 @@ const router = Router();
  *
  * /admin/shift-type-rates/{id}:
  *   get:
- *     summary: Retrieve a shift-type rate
+ *     summary: Retrieve a shift-type rate by ID
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -80,15 +77,22 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: The requested rate
+ *         description: The requested shift-type rate
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ShiftTypeRate'
  *       404:
  *         description: Shift-type rate not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *   put:
- *     summary: Update a shift-type rate
+ *     summary: Update an existing shift-type rate
  *     tags: [ShiftTypeRate]
  *     security:
  *       - CookieAuth: []
@@ -102,21 +106,10 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               shiftTypeId:
- *                 type: string
- *               rate:
- *                 type: number
- *               validFrom:
- *                 type: string
- *                 format: date-time
- *               validUntil:
- *                 type: string
- *                 format: date-time
+ *             $ref: '#/components/schemas/ShiftTypeRate'
  *     responses:
  *       200:
- *         description: The updated rate
+ *         description: The updated shift-type rate
  *         content:
  *           application/json:
  *             schema:
@@ -136,7 +129,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Delete successful
+ *         description: Success message
  *         content:
  *           application/json:
  *             schema:

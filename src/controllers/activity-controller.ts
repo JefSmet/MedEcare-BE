@@ -211,3 +211,89 @@ export async function activitiesPeriodFilter(
     next(error);
   }
 }
+
+export async function listShiftsByPeriod(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const startDateStr = req.query.startDate as string;
+    const endDateStr = req.query.endDate as string;
+
+    if (!startDateStr || !endDateStr) {
+      res.status(400).json({ error: 'startDate and endDate are required' });
+      return;
+    }
+
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      res.status(400).json({ error: 'Invalid date format for startDate or endDate' });
+      return;
+    }
+
+    const activities = await prisma.activity.findMany({
+      where: {
+        start: { gte: startDate },
+        end: { lte: endDate },
+        activityType: {
+          equals: 'SHIFT',         
+        },
+      },
+      include: {
+        person: true,
+        shiftType: true,
+      },
+    });
+
+    res.json(activities);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function listVerlofByPeriod(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const startDateStr = req.query.startDate as string;
+    const endDateStr = req.query.endDate as string;
+
+    if (!startDateStr || !endDateStr) {
+      res.status(400).json({ error: 'startDate and endDate are required' });
+      return;
+    }
+
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      res.status(400).json({ error: 'Invalid date format for startDate or endDate' });
+      return;
+    }
+
+    const activities = await prisma.activity.findMany({
+      where: {
+        start: { gte: startDate },
+        end: { lte: endDate },
+        NOT: {
+          activityType: {
+            equals: 'SHIFT'           
+          },
+        },
+      },
+      include: {
+        person: true,
+        shiftType: true,
+      },
+    });
+
+    res.json(activities);
+  } catch (error) {
+    next(error);
+  }
+}

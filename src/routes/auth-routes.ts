@@ -52,27 +52,15 @@ const router = Router();
  *                 format: date
  *     responses:
  *       201:
- *         description: User successfully registered
+ *         description: The newly registered user
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 user:
- *                   type: object
- *                   properties:
- *                     personId:
- *                       type: string
- *                     email:
- *                       type: string
- *       400:
- *         description: Validation error or missing fields
+ *               $ref: '#/components/schemas/AuthUserResponse'
  *
  * /auth/login:
  *   post:
- *     summary: Log in with email and password
+ *     summary: Login a user
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -83,6 +71,7 @@ const router = Router();
  *             required:
  *               - email
  *               - password
+ *               - platform
  *             properties:
  *               email:
  *                 type: string
@@ -90,215 +79,40 @@ const router = Router();
  *                 type: string
  *               platform:
  *                 type: string
- *                 description: "web, mobile, or web-persist"
+ *                 description: Platform from which the user logs in (e.g. "web", "mobile")
  *     responses:
  *       200:
- *         description: |
- *           Login successful. For `platform` "mobile" the access and refresh
- *           tokens are included in the response body. For other platforms the
- *           tokens are set as HttpOnly cookies.
+ *         description: The logged in user with tokens
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 accessToken:
- *                   type: string
- *                   description: Present only when `platform` is "mobile"
- *                 refreshToken:
- *                   type: string
- *                   description: Present only when `platform` is "mobile"
- *                 authenticatedUser:
- *                   type: object
- *                   properties:
- *                     personId:
- *                       type: string
- *                     email:
- *                       type: string
- *                     roles:
- *                       type: array
- *                       items:
- *                         type: string
- *                     firstName:
- *                       type: string
- *                     lastName:
- *                       type: string
- *                     dateOfBirth:
- *                       type: string
- *                       format: date-time
- *       401:
- *         description: Invalid credentials
- *       429:
- *         description: Too many login attempts (rate limit)
- *
- * /auth/refresh:
- *   post:
- *     summary: Refresh the JWT tokens via the refreshToken cookie
- *     tags: [Auth]
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               platform:
- *                 type: string
- *                 description: "web, mobile, or web-persist"
- *     responses:
- *       200:
- *         description: |
- *           Tokens successfully renewed. For `platform` "mobile" the new tokens
- *           are returned in the response body. Otherwise they are set as
- *           HttpOnly cookies.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 accessToken:
- *                   type: string
- *                   description: Present only when `platform` is "mobile"
- *                 refreshToken:
- *                   type: string
- *                   description: Present only when `platform` is "mobile"
- *                 authenticatedUser:
- *                   type: object
- *                   properties:
- *                     personId:
- *                       type: string
- *                     email:
- *                       type: string
- *                     roles:
- *                       type: array
- *                       items:
- *                         type: string
- *                     firstName:
- *                       type: string
- *                     lastName:
- *                       type: string
- *                     dateOfBirth:
- *                       type: string
- *                       format: date-time
- *       400:
- *         description: No refreshToken cookie present
- *       401:
- *         description: Invalid or expired refresh token
- *       404:
- *         description: Refresh token not found
- *
- * /auth/forgot-password:
- *   post:
- *     summary: Request a password reset email
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *     responses:
- *       200:
- *         description: Reset instructions sent (if email is valid)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *       400:
- *         description: Missing email address
- *       404:
- *         description: No user found with this email address
- *
- * /auth/reset-password:
- *   post:
- *     summary: Reset the password using a reset token
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - token
- *               - newPassword
- *             properties:
- *               token:
- *                 type: string
- *               newPassword:
- *                 type: string
- *     responses:
- *       200:
- *         description: Password successfully reset
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *       400:
- *         description: Missing fields or token expired
- *       404:
- *         description: Invalid reset token
- *
- * /auth/change-password:
- *   post:
- *     summary: Change the password of the logged-in user (JWT via cookie)
- *     tags: [Auth]
- *     security:
- *       - CookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - oldPassword
- *               - newPassword
- *             properties:
- *               oldPassword:
- *                 type: string
- *               newPassword:
- *                 type: string
- *     responses:
- *       200:
- *         description: Password successfully changed
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *       400:
- *         description: Missing fields or weak password
- *       401:
- *         description: Old password incorrect or not authenticated
+ *               $ref: '#/components/schemas/AuthUserResponse'
  *
  * /auth/logout:
  *   post:
- *     summary: Invalidate the refresh token and clear auth cookies
+ *     summary: Logout a user
  *     tags: [Auth]
+ *     security:
+ *       - CookieAuth: []
+ *     responses:
+ *       204:
+ *         description: Successful logout
+ *
+ * /auth/refresh:
+ *   post:
+ *     summary: Refresh authentication token
+ *     tags: [Auth]
+ *     security:
+ *       - CookieAuth: []
  *     responses:
  *       200:
- *         description: Logout successful
+ *         description: New authentication token
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message:
+ *                 token:
  *                   type: string
  */
 router.post('/register', register);

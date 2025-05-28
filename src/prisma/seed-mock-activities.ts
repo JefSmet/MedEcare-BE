@@ -29,11 +29,9 @@ async function main() {
           '05B2122D-009F-4B8F-B010-2C8E84F2651B', // Annemie Van Ingelgem
           '37CFACDB-DD29-4125-BCD8-4E8F519D433E', // Bert Peeters
           'D7FC6FD4-093A-46A6-94D2-520497754145', // Tania Decoster
-          'D722AB12-7D5B-4A12-989B-7DC23046822F', // Koen Hezemans
           'C9E423E0-CE00-4CFA-8DCA-836010BE0EEA', // Nathan Van Hoeck
           'C0255E85-86FA-478F-816E-C50C364D367F', // Daphnée Demaeght
           '234A95AC-713D-4B84-9702-D68D3E6D6E2B', // Lennert Poppeliers
-          '3BE470D8-74B3-4C01-9E4F-EAE069F26B0A', // Jef Smet
           '6E7431EA-3439-408D-A514-EC9723204771', // Goswin Onsia
           'C947B64E-E08D-4B0B-8827-F12C09C2469E', // Evi Van Den Kerckhove
           '2DD622E3-8DC0-4252-82D9-F39B5F93D0C2'  // Mark Timmermans
@@ -83,7 +81,7 @@ async function main() {
         const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
         const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
         
-        const deleteCount = await tx.activity.deleteMany({
+        const deleteCount1 = await tx.activity.deleteMany({
           where: {
             activityType: 'SHIFT',
             start: {
@@ -92,7 +90,18 @@ async function main() {
             }
           }
         });
-        console.log(`Deleted ${deleteCount.count} existing shifts for ${year}-${month}`);
+        console.log(`Deleted ${deleteCount1.count} existing SHIFTs for ${year}-${month}`);
+
+        const deleteCount2 = await tx.activity.deleteMany({
+          where: {
+            activityType: 'shift',
+            start: {
+              gte: startDate,
+              lte: endDate
+            }
+          }
+        });
+        console.log(`Deleted ${deleteCount2.count} existing shifts for ${year}-${month}`);
         
         // Calculate number of days in the month
         const daysInMonth = getDaysInMonth(year, month);
@@ -109,7 +118,7 @@ async function main() {
           
           activities.push({
             id: generateUUID(),
-            activityType: 'shift',
+            activityType: 'SHIFT',
             start,
             end,
             status: 'SCHEDULED',

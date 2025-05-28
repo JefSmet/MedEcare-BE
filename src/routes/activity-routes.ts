@@ -7,6 +7,8 @@ import {
   listActivities,
   updateActivity,
   activitiesPeriodFilter,
+  listShiftsByPeriod,
+  listVerlofByPeriod
 } from '../controllers/activity-controller';
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
@@ -206,9 +208,90 @@ const router = Router();
  *               properties:
  *                 error:
  *                   type: string
+ * /admin/activities/period/shifts:
+ *   get:
+ *     summary: List shifts filtered by startDate and endDate
+ *     tags: [Activity]
+ *     security:
+ *       - CookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start date of the period (ISO 8601 format)
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End date of the period (ISO 8601 format)
+ *     responses:
+ *       200:
+ *         description: Returns a list of shifts within the specified period
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Activity'
+ *       400:
+ *         description: Missing or invalid query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *
+ * /admin/activities/period/verlof:
+ *   get:
+ *     summary: List leave activities filtered by startDate and endDate
+ *     tags: [Activity]
+ *     security:
+ *       - CookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start date of the period (ISO 8601 format)
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End date of the period (ISO 8601 format)
+ *     responses:
+ *       200:
+ *         description: Returns a list of leave activities within the specified period
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Activity'
+ *       400:
+ *         description: Missing or invalid query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 router.get('/filter', jwtAuth, requireAdmin, filterActivities);
 router.get('/period', jwtAuth, requireAdmin, activitiesPeriodFilter);
+router.get('/period/verlof', jwtAuth, requireAdmin, listVerlofByPeriod);
+router.get('/period/shifts', jwtAuth, requireAdmin, listShiftsByPeriod);
 
 router.get('/', jwtAuth, requireAdmin, listActivities);
 router.post('/', jwtAuth, requireAdmin, createActivity);

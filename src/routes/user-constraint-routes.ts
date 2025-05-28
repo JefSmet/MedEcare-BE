@@ -48,15 +48,9 @@ const router = Router();
  *             properties:
  *               personId:
  *                 type: string
- *               maxNightShiftsPerWeek:
- *                 type: integer
- *               maxConsecutiveNightShifts:
- *                 type: integer
- *               minRestHoursBetweenShifts:
- *                 type: integer
  *     responses:
  *       201:
- *         description: The newly created constraint
+ *         description: The newly created user constraint
  *         content:
  *           application/json:
  *             schema:
@@ -64,7 +58,7 @@ const router = Router();
  *
  * /admin/user-constraints/{id}:
  *   get:
- *     summary: Retrieve a constraint
+ *     summary: Retrieve a user constraint by ID
  *     tags: [UserConstraint]
  *     security:
  *       - CookieAuth: []
@@ -76,15 +70,22 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: The requested constraint
+ *         description: The requested user constraint
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/UserConstraint'
  *       404:
- *         description: Not found
+ *         description: User constraint not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *   put:
- *     summary: Update a constraint
+ *     summary: Update an existing user constraint
  *     tags: [UserConstraint]
  *     security:
  *       - CookieAuth: []
@@ -98,27 +99,18 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               personId:
- *                 type: string
- *               maxNightShiftsPerWeek:
- *                 type: integer
- *               maxConsecutiveNightShifts:
- *                 type: integer
- *               minRestHoursBetweenShifts:
- *                 type: integer
+ *             $ref: '#/components/schemas/UserConstraint'
  *     responses:
  *       200:
- *         description: The updated constraint
+ *         description: The updated user constraint
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/UserConstraint'
  *       404:
- *         description: Not found
+ *         description: User constraint not found
  *   delete:
- *     summary: Delete a constraint
+ *     summary: Delete a user constraint
  *     tags: [UserConstraint]
  *     security:
  *       - CookieAuth: []
@@ -130,7 +122,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion successful
+ *         description: Success message
  *         content:
  *           application/json:
  *             schema:
@@ -139,7 +131,7 @@ const router = Router();
  *                 message:
  *                   type: string
  *       404:
- *         description: Not found
+ *         description: User constraint not found
  */
 router.get('/', jwtAuth, requireAdmin, listUserConstraints);
 router.post('/', jwtAuth, requireAdmin, createUserConstraint);

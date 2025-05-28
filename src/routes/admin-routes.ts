@@ -53,27 +53,18 @@ const router = Router();
  *                 type: string
  *               role:
  *                 type: string
+ *                 description: Optional user role, e.g., ADMIN or USER
  *     responses:
  *       201:
- *         description: User successfully created
+ *         description: The newly created user
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 user:
- *                   type: object
- *                   properties:
- *                     personId:
- *                       type: string
- *                     email:
- *                       type: string
+ *               $ref: '#/components/schemas/AdminUserResponse'
  *
  * /admin/users/{id}:
  *   get:
- *     summary: Retrieve a single user by ID
+ *     summary: Retrieve a user by ID
  *     tags: [Admin]
  *     security:
  *       - CookieAuth: []
@@ -85,13 +76,20 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: User details
+ *         description: The requested user
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/AdminUserResponse'
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *   put:
  *     summary: Update an existing user
  *     tags: [Admin]
@@ -107,37 +105,14 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               role:
- *                 type: string
+ *             $ref: '#/components/schemas/AdminUserRequestBody'
  *     responses:
  *       200:
  *         description: The updated user
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 user:
- *                   type: object
- *                   properties:
- *                     personId:
- *                       type: string
- *                     email:
- *                       type: string
- *                     createdAt:
- *                       type: string
- *                       format: date-time
- *                     updatedAt:
- *                       type: string
- *                       format: date-time
+ *               $ref: '#/components/schemas/AdminUserResponse'
  *       404:
  *         description: User not found
  *   delete:
@@ -153,7 +128,7 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Deletion completed
+ *         description: Success message
  *         content:
  *           application/json:
  *             schema:
