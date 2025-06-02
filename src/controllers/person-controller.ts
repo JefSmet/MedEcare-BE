@@ -77,13 +77,14 @@ export async function createPerson(req: Request, res: Response, next: NextFuncti
 export async function updatePerson(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { id } = req.params;
-    const { firstName, lastName } = req.body;
+    const { firstName, lastName,dateOfBirth } = req.body;
 
     const updated = await prisma.person.update({
       where: { id },
       data: {
         firstName,
         lastName,
+        dateOfBirth
       },
     });
     res.json(updated);
