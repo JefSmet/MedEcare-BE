@@ -133,3 +133,6 @@ dist
 
 # sqlite3 databases
 dev.db
+/src/generated/prisma
+
+/src/generated/prisma
