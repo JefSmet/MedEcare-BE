@@ -108,6 +108,9 @@ model ShiftType {
   // Relation to activities
   activities Activity[]
 
+  // Relation to rosters
+  rosters Roster[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -183,4 +186,17 @@ model Doctor {
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//  8. Roster
+////////////////////////////////////////////////////////////////////////////////
+
+model Roster {
+  id          Int       @id
+  shiftTypeId String
+  shiftType   ShiftType @relation(fields: [shiftTypeId], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

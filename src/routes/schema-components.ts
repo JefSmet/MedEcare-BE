@@ -118,6 +118,22 @@
  *         createdAt:   { type: string, format: date-time }
  *         updatedAt:   { type: string, format: date-time }
  *
+ *     Roster:
+ *       type: object
+ *       properties:
+ *         id:          { type: integer }
+ *         shiftTypeId: { type: string }
+ *         createdAt:   { type: string, format: date-time }
+ *         updatedAt:   { type: string, format: date-time }
+ *         shiftType:
+ *           type: object
+ *           properties:
+ *             id:              { type: string }
+ *             name:            { type: string }
+ *             startHour:       { type: integer }
+ *             startMinute:     { type: integer }
+ *             durationMinutes: { type: integer }
+ *
  *     UserConstraint:
  *       type: object
  *       properties:

@@ -1,0 +1,8 @@
+-- CreateTable
+CREATE TABLE "Roster" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "shiftTypeId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Roster_shiftTypeId_fkey" FOREIGN KEY ("shiftTypeId") REFERENCES "ShiftType" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);

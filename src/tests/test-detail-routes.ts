@@ -57,16 +57,19 @@ async function testDetailRoutes() {
         // 2.3 Roles
         const rolesResponse = await axios.get('http://localhost:3000/admin/roles', axiosConfig);
         const roleId = rolesResponse.data[0]?.id;
-        
-        // 2.4 ShiftTypes
+          // 2.4 ShiftTypes
         const shiftTypesResponse = await axios.get('http://localhost:3000/admin/shift-types', axiosConfig);
         const shiftTypeId = shiftTypesResponse.data[0]?.id;
         
-        // 2.5 Activities
+        // 2.5 Rosters
+        const rostersResponse = await axios.get('http://localhost:3000/admin/rosters', axiosConfig);
+        const rosterId = rostersResponse.data[0]?.id;
+        
+        // 2.6 Activities
         const activitiesResponse = await axios.get('http://localhost:3000/admin/activities', axiosConfig);
         const activityId = activitiesResponse.data[0]?.id;
         
-        // 2.6 User Constraints
+        // 2.7 User Constraints
         const userConstraintsResponse = await axios.get('http://localhost:3000/admin/user-constraints', axiosConfig);
         const userConstraintId = userConstraintsResponse.data[0]?.id;
         
@@ -86,15 +89,21 @@ async function testDetailRoutes() {
         } else {
             console.log("❌ Geen gebruiker ID beschikbaar voor test");
         }
+          // 3.3 Roster details
+        if (rosterId) {
+            await testDetailRoute(`admin/rosters/${rosterId}`, `Roster details (ID: ${rosterId})`, axiosConfig);
+        } else {
+            console.log("❌ Geen roster ID beschikbaar voor test");
+        }
         
-        // 3.3 Activiteit details
+        // 3.4 Activiteit details
         if (activityId) {
             await testDetailRoute(`admin/activities/${activityId}`, `Activiteit details (ID: ${activityId})`, axiosConfig);
         } else {
             console.log("❌ Geen activiteit ID beschikbaar voor test");
         }
         
-        // 3.4 User Constraint details
+        // 3.5 User Constraint details
         if (userConstraintId) {
             await testDetailRoute(`admin/user-constraints/${userConstraintId}`, `Gebruikersbeperking details (ID: ${userConstraintId})`, axiosConfig);
         } else {

@@ -78,6 +78,7 @@ Je kunt inloggen met de volgende gegevens:
 - **Activiteiten (Shifts/Verlof)**: `/admin/activities`
 - **Shift Types**: `/admin/shift-types`
 - **Shift Type Tarieven**: `/admin/shift-type-rates` 
+- **Roosters**: `/admin/rosters`
 - **Gebruikersbeperkingen**: `/admin/user-constraints`
 - **Rollen**: `/admin/roles`
 - **Gebruikers**: `/admin/users`

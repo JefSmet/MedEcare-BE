@@ -26,6 +26,7 @@ import authRoutes from "./routes/auth-routes";
 import activityRoutes from "./routes/activity-routes";
 import personRoutes from "./routes/person-routes";
 import roleRoutes from "./routes/role-routes";
+import rosterRoutes from "./routes/roster-routes";
 import shiftTypeRateRoutes from "./routes/shift-type-rate-routes";
 import shiftTypeRoutes from "./routes/shift-type-routes";
 import userConstraintRoutes from "./routes/user-constraint-routes";
@@ -78,6 +79,7 @@ app.use("/admin", adminRoutes);
 // 8. Additional admin sub-routes for new models
 app.use("/admin/persons", personRoutes);
 app.use("/admin/roles", roleRoutes);
+app.use("/admin/rosters", rosterRoutes);
 app.use("/admin/shift-types", shiftTypeRoutes);
 app.use("/admin/shift-type-rates", shiftTypeRateRoutes);
 app.use("/admin/activities", activityRoutes);

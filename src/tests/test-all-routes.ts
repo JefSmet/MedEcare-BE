@@ -55,14 +55,16 @@ async function testAllAdminRoutes() {
         
         // 2.4 Shift Types
         await testRoute("admin/shift-types", "Shift Types", axiosConfig);
-        
-        // 2.5 Shift Type Rates
+          // 2.5 Shift Type Rates
         await testRoute("admin/shift-type-rates", "Shift Type Tarieven", axiosConfig);
         
-        // 2.6 Activities (Shifts & Leave)
+        // 2.6 Rosters
+        await testRoute("admin/rosters", "Roosters", axiosConfig);
+        
+        // 2.7 Activities (Shifts & Leave)
         await testRoute("admin/activities", "Activiteiten (Shifts/Verlof)", axiosConfig);
         
-        // 2.7 User Constraints
+        // 2.8 User Constraints
         await testRoute("admin/user-constraints", "Gebruikersbeperkingen", axiosConfig);
         
         console.log("\n=================================================================");
