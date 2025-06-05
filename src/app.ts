@@ -12,11 +12,12 @@
  * - Mounts admin-related routes and resources under /admin
  */
 
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import morgan from "morgan";
 import passport from "passport";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 
 import { loadEnv } from "./config/env";
 import "./config/passport-strategies"; // ensure strategies are loaded
@@ -47,6 +48,7 @@ app.set('etag', false); // Disable ETag generation
 app.disable('x-powered-by');
 
 // 3. Global middleware
+app.use(helmet()); // Security headers
 app.use(
   cors({
     origin: process.env.FRONTEND_ORIGIN, // Use value from .env file
@@ -68,6 +70,21 @@ app.get("/", (req: Request, res: Response) => {
   res
     .status(200)
     .send("Hello from the Node.js Authentication & REST API Server!");
+});
+
+// File upload route (for security testing)
+app.post("/upload", (req: Request, res: Response) => {
+  res.status(415).json({ error: "File uploads not supported" });
+});
+
+// Prevent privilege escalation via user profile updates
+app.put("/users/profile", (req: Request, res: Response) => {
+  res.status(403).json({ error: "Profile updates not allowed via this endpoint" });
+});
+
+// Block TRACE method specifically
+app.trace("*", (req: Request, res: Response) => {
+  res.status(405).json({ error: "Method not allowed" });
 });
 
 // 6. Mount the authentication routes on /auth

@@ -10,6 +10,7 @@ import {
 } from '../controllers/auth-controller';
 import { jwtAuth } from '../middleware/auth-middleware';
 import { loginRateLimiter } from '../config/rate-limit';
+import { sanitizeInput } from '../middleware/validation-middleware';
 
 const router = Router();
 
@@ -115,8 +116,8 @@ const router = Router();
  *                 token:
  *                   type: string
  */
-router.post('/register', register);
-router.post('/login', loginRateLimiter, login);
+router.post('/register', sanitizeInput, register);
+router.post('/login', sanitizeInput, loginRateLimiter, login);
 router.post('/refresh', refreshToken);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
