@@ -91,7 +91,8 @@ const router = Router();
  *                 error:
  *                   type: string
  *   put:
- *     summary: Update an existing user
+ *     summary: Update an existing user (authenticated users)
+ *     description: Does not require admin privileges, only authentication
  *     tags: [Admin]
  *     security:
  *       - CookieAuth: []

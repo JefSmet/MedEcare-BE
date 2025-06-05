@@ -23,7 +23,7 @@ const router = Router();
  *
  * /admin/activities:
  *   get:
- *     summary: List all activities
+ *     summary: List all activities (authenticated users)
  *     tags: [Activity]
  *     security:
  *       - CookieAuth: []
@@ -37,7 +37,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Activity'
  *   post:
- *     summary: Create a new activity
+ *     summary: Create a new activity (authenticated users)
  *     tags: [Activity]
  *     security:
  *       - CookieAuth: []
