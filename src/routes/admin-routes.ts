@@ -142,7 +142,7 @@ const router = Router();
 router.get('/users', jwtAuth, requireAdmin, listUsers);
 router.get('/users/:id', jwtAuth, requireAdmin, getUserById);
 router.post('/users', jwtAuth, requireAdmin, createNewUser);
-router.put('/users/:id', jwtAuth, requireAdmin, updateExistingUser);
+router.put('/users/:id', jwtAuth, updateExistingUser);
 router.delete('/users/:id', jwtAuth, requireAdmin, deleteExistingUser);
 
 export default router;

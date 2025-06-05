@@ -293,8 +293,8 @@ router.get('/period', jwtAuth, requireAdmin, activitiesPeriodFilter);
 router.get('/period/verlof', jwtAuth, requireAdmin, listVerlofByPeriod);
 router.get('/period/shifts', jwtAuth, requireAdmin, listShiftsByPeriod);
 
-router.get('/', jwtAuth, requireAdmin, listActivities);
-router.post('/', jwtAuth, requireAdmin, createActivity);
+router.get('/', jwtAuth, listActivities);
+router.post('/', jwtAuth, createActivity);
 router.get('/:id', jwtAuth, requireAdmin, getActivityById);
 router.put('/:id', jwtAuth, requireAdmin, updateActivity);
 router.delete('/:id', jwtAuth, requireAdmin, deleteActivity);
