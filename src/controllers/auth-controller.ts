@@ -125,9 +125,8 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       if (err) {
         next(err);
         return;
-      }
-      if (!user) {
-        res.status(401).json({ error: info?.message || 'Invalid credentials.' });
+      }      if (!user) {
+        res.status(401).json({ error: 'Invalid credentials.', message: 'Invalid credentials.' });
         return;
       }
 

@@ -23,7 +23,7 @@ const router = Router();
  *
  * /admin/activities:
  *   get:
- *     summary: List all activities
+ *     summary: List all activities (authenticated users)
  *     tags: [Activity]
  *     security:
  *       - CookieAuth: []
@@ -37,7 +37,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Activity'
  *   post:
- *     summary: Create a new activity
+ *     summary: Create a new activity (authenticated users)
  *     tags: [Activity]
  *     security:
  *       - CookieAuth: []
@@ -293,8 +293,8 @@ router.get('/period', jwtAuth, requireAdmin, activitiesPeriodFilter);
 router.get('/period/verlof', jwtAuth, requireAdmin, listVerlofByPeriod);
 router.get('/period/shifts', jwtAuth, requireAdmin, listShiftsByPeriod);
 
-router.get('/', jwtAuth, requireAdmin, listActivities);
-router.post('/', jwtAuth, requireAdmin, createActivity);
+router.get('/', jwtAuth, listActivities);
+router.post('/', jwtAuth, createActivity);
 router.get('/:id', jwtAuth, requireAdmin, getActivityById);
 router.put('/:id', jwtAuth, requireAdmin, updateActivity);
 router.delete('/:id', jwtAuth, requireAdmin, deleteActivity);

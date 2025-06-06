@@ -91,7 +91,8 @@ const router = Router();
  *                 error:
  *                   type: string
  *   put:
- *     summary: Update an existing user
+ *     summary: Update an existing user (authenticated users)
+ *     description: Does not require admin privileges, only authentication
  *     tags: [Admin]
  *     security:
  *       - CookieAuth: []
@@ -142,7 +143,7 @@ const router = Router();
 router.get('/users', jwtAuth, requireAdmin, listUsers);
 router.get('/users/:id', jwtAuth, requireAdmin, getUserById);
 router.post('/users', jwtAuth, requireAdmin, createNewUser);
-router.put('/users/:id', jwtAuth, requireAdmin, updateExistingUser);
+router.put('/users/:id', jwtAuth, updateExistingUser);
 router.delete('/users/:id', jwtAuth, requireAdmin, deleteExistingUser);
 
 export default router;

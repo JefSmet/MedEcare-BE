@@ -56,15 +56,14 @@ passport.use(
           include: {
             person: true,
             userRoles: { include: { role: true } },
-          },
-        });
+          },        });
         if (!dbUser) {
-          return done(null, false, { message: 'Invalid credentials (user).' });
+          return done(null, false, { message: 'Invalid credentials.' });
         }
 
         const isMatch = await bcrypt.compare(password, dbUser.password);
         if (!isMatch) {
-          return done(null, false, { message: 'Invalid credentials (password).' });
+          return done(null, false, { message: 'Invalid credentials.' });
         }
 
         return done(null, toAuthenticatedUser(dbUser));
