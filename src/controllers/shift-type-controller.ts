@@ -48,6 +48,7 @@ export async function getShiftTypeById(req: Request, res: Response, next: NextFu
 
 export async function createShiftType(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    console.log('Creating ShiftType with body:', req.body);
     const {
       name,
       startHour,
