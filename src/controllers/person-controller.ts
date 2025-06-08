@@ -117,3 +117,23 @@ export async function listStaff(req: Request, res: Response, next: NextFunction)
     next(error);
   }
 }
+export async function getDoctorById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { id } = req.params;
+    const doctor = await prisma.doctor.findUnique({
+      where: { personId: id },
+      include: {
+        person: true,
+      },
+    });
+    
+    if (!doctor) {
+      res.status(404).json({ error: 'Doctor not found' });
+      return;
+    }
+    
+    res.json(doctor);
+  } catch (error) {
+    next(error);
+  }
+}

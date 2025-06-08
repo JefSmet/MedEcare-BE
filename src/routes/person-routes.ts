@@ -6,6 +6,7 @@ import {
   listPersons,
   updatePerson,
   listStaff,
+  getDoctorById,
 } from '../controllers/person-controller';
 import { jwtAuth } from '../middleware/auth-middleware';
 import { requireAdmin } from '../middleware/role-middleware';
@@ -149,6 +150,7 @@ const router = Router();
 
 router.get('/', jwtAuth, requireAdmin, listPersons);
 router.get('/staff', jwtAuth, requireAdmin, listStaff);
+router.get('/doctors/:id', jwtAuth, requireAdmin, getDoctorById);
 router.post('/', jwtAuth, requireAdmin, createPerson);
 router.get('/:id', jwtAuth, requireAdmin, getPersonById);
 router.put('/:id', jwtAuth, requireAdmin, updatePerson);
