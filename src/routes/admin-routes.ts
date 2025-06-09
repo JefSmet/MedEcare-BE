@@ -32,6 +32,30 @@ const router = Router();
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/AdminUserResponse'
+ *             example:
+ *               - personId: "user-123"
+ *                 email: "jane.doe@example.com"
+ *                 createdAt: "2025-06-09T10:00:00Z"
+ *                 updatedAt: "2025-06-09T10:00:00Z"
+ *                 userRoles:
+ *                   - userId: "user-123"
+ *                     roleId: "role-456"
+ *                     role:
+ *                       id: "role-456"
+ *                       name: "ADMIN"
+ *                 person:
+ *                   id: "person-123"
+ *                   firstName: "Jane"
+ *                   lastName: "Doe"
+ *                   dateOfBirth: "1990-05-15"
+ *                   createdAt: "2025-01-01T08:00:00Z"
+ *                   updatedAt: "2025-05-01T08:00:00Z"
+ *                   doctor:
+ *                     personId: "person-123"
+ *                     rizivNumber: "BE12345678901"
+ *                     isEnabledInShifts: true
+ *                     createdAt: "2025-05-28T12:00:00Z"
+ *                     updatedAt: "2025-05-28T12:00:00Z"
  *   post:
  *     summary: Create a new user
  *     tags: [Admin]

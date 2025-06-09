@@ -126,6 +126,7 @@ export async function createNewUser(
 /**
  * @function updateExistingUser
  * @description Allows an admin to update a user's email, role, or password.
+ * Roles are handled separately through the UserRole table for many-to-many relationship.
  *
  * @param req Express request
  * @param res Express response
@@ -139,13 +140,8 @@ export async function updateExistingUser(
 ): Promise<void> {
   try {
     const userId = req.params.id;
-    const { email, password, role } = req.body;
-
-    const updateData: Record<string, any> = {};
+    const { email, password, role } = req.body;    const updateData: Record<string, any> = {};
     if (email) updateData.email = email;
-    // If you have userRoles in a separate table, you'd handle that differently for role.
-    // This is just an example field if you still had a single role in user. Adjust as needed.
-    if (role) updateData.role = role;
 
     if (password) {
       if (!isPasswordValid(password)) {
@@ -156,6 +152,34 @@ export async function updateExistingUser(
       }
       const hashedPassword = await bcrypt.hash(password, 10);
       updateData.password = hashedPassword;
+    }
+
+    // Handle role updates in the separate UserRole table
+    if (role) {
+      // First, find the role by name
+      const foundRole = await prisma.role.findUnique({
+        where: { name: role.toLowerCase() },
+      });
+
+      if (!foundRole) {
+        res.status(400).json({
+          error: `Role "${role}" not found in the database.`,
+        });
+        return;
+      }
+
+      // Remove all existing roles for this user
+      await prisma.userRole.deleteMany({
+        where: { userId },
+      });
+
+      // Add the new role
+      await prisma.userRole.create({
+        data: {
+          userId,
+          roleId: foundRole.id,
+        },
+      });
     }
 
     const updated = await updateUser(userId, updateData);

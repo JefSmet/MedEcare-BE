@@ -25,12 +25,14 @@ import adminRoutes from "./routes/admin-routes";
 import authRoutes from "./routes/auth-routes";
 
 import activityRoutes from "./routes/activity-routes";
+import doctorRoutes from "./routes/doctor-routes";
 import personRoutes from "./routes/person-routes";
 import roleRoutes from "./routes/role-routes";
 import rosterRoutes from "./routes/roster-routes";
 import shiftTypeRateRoutes from "./routes/shift-type-rate-routes";
 import shiftTypeRoutes from "./routes/shift-type-routes";
 import userConstraintRoutes from "./routes/user-constraint-routes";
+import userRoleRoutes from "./routes/user-role-routes";
 
 // Swagger UI imports
 import swaggerUi from "swagger-ui-express";
@@ -94,13 +96,15 @@ app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 
 // 8. Additional admin sub-routes for new models
+app.use("/admin/activities", activityRoutes);
+app.use("/admin/doctors", doctorRoutes);
 app.use("/admin/persons", personRoutes);
 app.use("/admin/roles", roleRoutes);
 app.use("/admin/rosters", rosterRoutes);
 app.use("/admin/shift-types", shiftTypeRoutes);
 app.use("/admin/shift-type-rates", shiftTypeRateRoutes);
-app.use("/admin/activities", activityRoutes);
 app.use("/admin/user-constraints", userConstraintRoutes);
+app.use("/admin/user-roles", userRoleRoutes);
 
 // 9. Swagger UI route (with customSiteTitle)
 // app.use(

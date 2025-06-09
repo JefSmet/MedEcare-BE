@@ -49,22 +49,28 @@ async function testAllAdminRoutes() {
         
         // 2.2 Persons
         await testRoute("admin/persons", "Personen", axiosConfig);
-        
-        // 2.3 Roles
+          // 2.3 Roles
         await testRoute("admin/roles", "Rollen", axiosConfig);
         
-        // 2.4 Shift Types
+        // 2.4 Doctors
+        await testRoute("admin/doctors", "Artsen", axiosConfig);
+        
+        // 2.5 User Roles
+        await testRoute("admin/user-roles", "Gebruiker Rollen", axiosConfig);
+        
+        // 2.6 Shift Types
         await testRoute("admin/shift-types", "Shift Types", axiosConfig);
-          // 2.5 Shift Type Rates
+        
+        // 2.7 Shift Type Rates
         await testRoute("admin/shift-type-rates", "Shift Type Tarieven", axiosConfig);
         
-        // 2.6 Rosters
+        // 2.8 Rosters
         await testRoute("admin/rosters", "Roosters", axiosConfig);
         
-        // 2.7 Activities (Shifts & Leave)
+        // 2.9 Activities (Shifts & Leave)
         await testRoute("admin/activities", "Activiteiten (Shifts/Verlof)", axiosConfig);
         
-        // 2.8 User Constraints
+        // 2.10 User Constraints
         await testRoute("admin/user-constraints", "Gebruikersbeperkingen", axiosConfig);
         
         console.log("\n=================================================================");
@@ -128,12 +134,19 @@ function getSummary(obj: any): any {
     // Veel voorkomende id velden
     if (obj.id) summary.id = obj.id;
     if (obj.personId) summary.personId = obj.personId;
-    
-    // Veel voorkomende naam/omschrijving velden
+      // Veel voorkomende naam/omschrijving velden
     if (obj.name) summary.name = obj.name;
     if (obj.firstName) summary.firstName = obj.firstName;
     if (obj.lastName) summary.lastName = obj.lastName;
     if (obj.email) summary.email = obj.email;
+    
+    // Doctor-specifiek
+    if (obj.rizivNumber) summary.rizivNumber = obj.rizivNumber;
+    if (obj.isEnabledInShifts !== undefined) summary.isEnabledInShifts = obj.isEnabledInShifts;
+    
+    // UserRole-specifiek
+    if (obj.userId) summary.userId = obj.userId;
+    if (obj.roleId) summary.roleId = obj.roleId;
     
     // Activiteit-specifiek
     if (obj.activityType) summary.activityType = obj.activityType;

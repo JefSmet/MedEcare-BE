@@ -43,9 +43,9 @@ export async function getRoleById(req: Request, res: Response, next: NextFunctio
 
 export async function createRole(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { name } = req.body.toUpperCase();;
+    const { name } = req.body;
     const newRole = await prisma.role.create({
-      data: { name },
+      data: { name: name.toUpperCase() },
     });
     res.status(201).json(newRole);
   } catch (error) {
@@ -56,11 +56,11 @@ export async function createRole(req: Request, res: Response, next: NextFunction
 export async function updateRole(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { id } = req.params;
-    const { name } = req.body.toUpperCase();
+    const { name } = req.body;
 
     const updated = await prisma.role.update({
       where: { id },
-      data: { name },
+      data: { name: name.toUpperCase() },
     });
     res.json(updated);
   } catch (error) {

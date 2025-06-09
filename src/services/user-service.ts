@@ -186,7 +186,12 @@ export async function findAllUsersWithPersonDetails(): Promise<
   try {
     const users = await prisma.user.findMany({
       include: {
-        person: true,
+        person: {
+          include: {
+            doctor: true,
+          },
+        },
+        userRoles: true,
       },
     });
     return users;
@@ -248,7 +253,11 @@ export async function findUserById(
     const user = await prisma.user.findUnique({
       where: { personId: userId },
       include: {
-        person: true,
+        person: {
+          include: {
+            doctor: true,
+          },
+        },
       },
     });
     return user;

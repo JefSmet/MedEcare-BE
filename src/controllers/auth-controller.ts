@@ -39,6 +39,8 @@ interface RegisterRequestBody {
   firstName?: string;
   lastName?: string;
   dateOfBirth?: string;
+  rizivNumber?: string;
+  isEnabledInShifts?: boolean;
 }
 
 export async function register(
@@ -54,6 +56,8 @@ export async function register(
       firstName,
       lastName,
       dateOfBirth,
+      rizivNumber,
+      isEnabledInShifts = true,
     } = req.body as RegisterRequestBody;
 
     if (!email || !password) {
@@ -63,6 +67,12 @@ export async function register(
     if (!firstName || !lastName || !dateOfBirth) {
       res.status(400).json({
         error: 'First name, last name, and date of birth are required fields.',
+      });
+      return;
+    }
+    if (!rizivNumber) {
+      res.status(400).json({
+        error: 'RIZIV number is required.',
       });
       return;
     }
@@ -81,6 +91,15 @@ export async function register(
       return;
     }
 
+    // Check if RIZIV number already exists
+    const existingDoctor = await prisma.doctor.findUnique({
+      where: { rizivNumber },
+    });
+    if (existingDoctor) {
+      res.status(400).json({ error: 'RIZIV number already exists.' });
+      return;
+    }
+
     const existingPerson = await prisma.person.findFirst({
       where: { firstName, lastName, dateOfBirth: parsedDate },
     });
@@ -95,7 +114,17 @@ export async function register(
       personId = newPerson.id;
     }
 
+    // Create User (which should handle UserRole creation)
     const newUser = await createUser({ email, password, role, personId });
+
+    // Always create Doctor record
+    await prisma.doctor.create({
+      data: {
+        personId,
+        rizivNumber,
+        isEnabledInShifts,
+      },
+    });
 
     res.status(201).json({
       message: 'Registration successful.',

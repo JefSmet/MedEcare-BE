@@ -47,6 +47,43 @@
  *         id:   { type: string }
  *         name: { type: string }
  *
+ *     Doctor:
+ *       type: object
+ *       properties:
+ *         personId: { type: string }
+ *         rizivNumber: { type: string }
+ *         isEnabledInShifts: { type: boolean }
+ *         createdAt: { type: string, format: date-time }
+ *         updatedAt: { type: string, format: date-time }
+ *         person:
+ *           type: object
+ *           properties:
+ *             id: { type: string }
+ *             firstName: { type: string }
+ *             lastName: { type: string }
+ *             dateOfBirth: { type: string, format: date }
+ *             user:
+ *               type: object
+ *               nullable: true
+ *               properties:
+ *                 personId: { type: string }
+ *                 email: { type: string }
+ *
+ *     DoctorRequestBody:
+ *       type: object
+ *       required: [personId, rizivNumber]
+ *       properties:
+ *         personId: 
+ *           type: string
+ *           description: The person ID to link to this doctor
+ *         rizivNumber: 
+ *           type: string
+ *           description: Belgian RIZIV number (11 characters)
+ *         isEnabledInShifts: 
+ *           type: boolean
+ *           description: Whether the doctor is enabled for shift planning
+ *           default: true
+ *
  *     Activity:
  *       type: object
  *       properties:
@@ -160,6 +197,9 @@
  *         dateOfBirth: { type: string, format: date }
  *         createdAt: { type: string, format: date-time }
  *         updatedAt: { type: string, format: date-time }
+ *         doctor:
+ *           $ref: '#/components/schemas/Doctor'
+ *           nullable: true
  *
  *     AdminUserResponse:
  *       type: object
@@ -168,6 +208,14 @@
  *         email:    { type: string }
  *         createdAt: { type: string, format: date-time }
  *         updatedAt: { type: string, format: date-time }
+ *         userRoles:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               userId: { type: string }
+ *               roleId: { type: string }
+ *               role:   { $ref: '#/components/schemas/Role' }
  *         person:   { $ref: '#/components/schemas/AdminPersonResponse' }
  *
  *     AuthUserResponse:
@@ -194,6 +242,53 @@
  *             dateOfBirth:
  *               type: string
  *               format: date
+ *
+ *     PersonRequestBody:
+ *       type: object
+ *       required: [firstName, lastName, dateOfBirth]
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           description: The person's first name
+ *         lastName:
+ *           type: string
+ *           description: The person's last name
+ *         dateOfBirth:
+ *           type: string
+ *           format: date
+ *           description: The person's date of birth
+ *
+ *     PersonResponse:
+ *       type: object
+ *       properties:
+ *         id: { type: string }
+ *         firstName: { type: string }
+ *         lastName: { type: string }
+ *         dateOfBirth: { type: string, format: date }
+ *         createdAt: { type: string, format: date-time }
+ *         updatedAt: { type: string, format: date-time }
+ *         user:
+ *           type: object
+ *           nullable: true
+ *           properties:
+ *             personId: { type: string }
+ *             email: { type: string }
+ *         activities:
+ *           type: array
+ *           items: { $ref: '#/components/schemas/Activity' }
+ *         userConstraints:
+ *           type: array
+ *           items: { $ref: '#/components/schemas/UserConstraint' }
+ *
+ *     SimplePersonResponse:
+ *       type: object
+ *       properties:
+ *         id: { type: string }
+ *         firstName: { type: string }
+ *         lastName: { type: string }
+ *         dateOfBirth: { type: string, format: date }
+ *         createdAt: { type: string, format: date-time }
+ *         updatedAt: { type: string, format: date-time }
  *
  *   responses:
  *     NotFound:
