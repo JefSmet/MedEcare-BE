@@ -1,11 +1,10 @@
 /**
  * @description
  * Roster Controller for CRUD on 'Roster'.
- *
- * Key features:
+ * * Key features:
  * - listRosters: Return all rosters with their related ShiftType
  * - getRosterById: Return a single roster by ID
- * - createRoster: Create a new roster with shiftTypeId
+ * - createRoster: Clear entire roster table and populate with new collection
  * - updateRoster: Update an existing roster
  * - deleteRoster: Remove a roster by ID
  *
@@ -53,18 +52,41 @@ export async function getRosterById(req: Request, res: Response, next: NextFunct
 
 export async function createRoster(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { id, shiftTypeId } = req.body;
+    const { rosters } = req.body;
 
-    const newRoster = await prisma.roster.create({
-      data: {
-        id,
-        shiftTypeId,
-      },
-      include: {
-        shiftType: true,
-      },
+    // Validate that rosters is an array
+    if (!Array.isArray(rosters)) {
+      res.status(400).json({ error: 'Request body must contain a "rosters" array' });
+      return;
+    }
+
+    // Use transaction to ensure atomicity: first clear the table, then populate with new data
+    const result = await prisma.$transaction(async (tx) => {
+      // First, clear the entire roster table
+      await tx.roster.deleteMany({});
+
+      // Then, create all new rosters
+      const createdRosters = await Promise.all(
+        rosters.map(async (rosterData: { id: number; shiftTypeId: string }) => {
+          return await tx.roster.create({
+            data: {
+              id: rosterData.id,
+              shiftTypeId: rosterData.shiftTypeId,
+            },
+            include: {
+              shiftType: true,
+            },
+          });
+        })
+      );
+
+      return createdRosters;
     });
-    res.status(201).json(newRoster);
+
+    res.status(201).json({
+      message: `Roster table cleared and ${result.length} new rosters created`,
+      rosters: result,
+    });
   } catch (error) {
     next(error);
   }
